@@ -1,0 +1,21 @@
+# Recordatorio Universal - API
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Pasar el encabezado Authorization a PHP (algunos hostings lo borran)
+  RewriteCond %{HTTP:Authorization} .
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+  # Carpetas privadas: nadie las puede abrir desde el navegador
+  RewriteRule ^(src|sql|storage)(/|$) - [F,L]
+
+  # Todo lo que no sea un archivo real va al enrutador
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+<FilesMatch "^(config\.php|config\.example\.php|.*\.sql|.*\.md)$">
+  Require all denied
+</FilesMatch>

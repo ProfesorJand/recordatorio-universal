@@ -1,0 +1,8 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Page from '../components/pages/TasksPage.tsx';
+---
+
+<Layout title="Tareas">
+  <Page client:only="react" />
+</Layout>

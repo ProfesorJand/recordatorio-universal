@@ -1,0 +1,13 @@
+---
+import Layout from '../layouts/Layout.astro';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<Layout title="No encontrado">
+  <div class="center-screen">
+    <div class="card" style="text-align:center;max-width:420px">
+      <h1>Página no encontrada</h1>
+      <a class="btn primary" href={`${base}/tareas/`}>Ir a mis tareas</a>
+    </div>
+  </div>
+</Layout>

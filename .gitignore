@@ -1,0 +1,19 @@
+# Node / Astro
+node_modules/
+frontend/dist/
+frontend/.astro/
+frontend/.env
+.env
+
+# Backend: datos privados y generados
+backend/config.php
+backend/storage/cache/
+backend/storage/logs/
+backend/storage/cron.lock
+backend/uploads/*
+!backend/uploads/.htaccess
+
+# Sistema
+.DS_Store
+Thumbs.db
+.vscode/

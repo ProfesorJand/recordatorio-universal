@@ -1,0 +1,10 @@
+{
+  "name": "Recordatorio Universal",
+  "short_name": "Recordatorios",
+  "start_url": "/recordatorio-universal/tareas/",
+  "scope": "/recordatorio-universal/",
+  "display": "standalone",
+  "background_color": "#f4f5f7",
+  "theme_color": "#257de0",
+  "icons": [{ "src": "/recordatorio-universal/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

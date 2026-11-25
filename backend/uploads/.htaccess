@@ -1,0 +1,8 @@
+# Las imágenes subidas se pueden ver, pero nunca se ejecuta código aquí
+Options -Indexes
+<FilesMatch "\.(php|phtml|php\d|phar|pl|py|cgi|sh|htaccess)$">
+  Require all denied
+</FilesMatch>
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>

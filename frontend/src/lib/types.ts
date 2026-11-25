@@ -1,0 +1,77 @@
+// Tipos compartidos (lo que devuelve la API PHP)
+
+export type Priority = 'urgente' | 'S' | 'A' | 'B' | 'C';
+export type Status = 'pendiente' | 'en_progreso' | 'aplazada' | 'bloqueada' | 'completada';
+
+export interface Person {
+  id: number;
+  name: string;
+  email: string;
+  picture?: string | null;
+  timezone?: string | null;
+}
+
+export interface User {
+  id: number;
+  email: string;
+  name: string | null;
+  picture: string | null;
+  role: { id: number; slug: string | null; name: string | null };
+  is_owner: boolean;
+  timezone: string | null;
+  work_start: string | null;
+  work_end: string | null;
+  work_days: number[];
+  notify_email: boolean;
+  whatsapp_phone: string | null;
+  tutorials_seen: string[];
+  permissions: string[];
+}
+
+export interface Task {
+  id: number;
+  project: { id: number; name: string; color: string };
+  parent_task_id: number | null;
+  title: string;
+  description: string | null;
+  priority: Priority;
+  status: Status;
+  assignee: Person | null;
+  supervisor: Person | null;
+  created_by: Person;
+  due_at: string | null; // ISO UTC
+  due_tz: string | null; // zona de quien fijó la fecha
+  reminder_every_minutes: number | null;
+  next_checkin_at: string | null;
+  deferred_until: string | null;
+  last_checkin_response: string | null;
+  last_checkin_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  children_open: number;
+}
+
+export interface Project {
+  id: number;
+  name: string;
+  description: string | null;
+  color: string;
+  archived: boolean;
+  created_at: string;
+  members_count: number;
+  open_tasks: number;
+  members?: Person[];
+  resources?: { id: number; type: 'link' | 'image'; title: string; url: string; created_at: string }[];
+}
+
+export interface AppNotification {
+  id: number;
+  type: string;
+  title: string;
+  body: string | null;
+  actionable: boolean;
+  read: boolean;
+  created_at: string;
+  task: { id: number; title: string; status: Status; due_at: string | null; priority: Priority } | null;
+}

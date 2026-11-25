@@ -1,0 +1,8 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Page from '../components/pages/ProfilePage.tsx';
+---
+
+<Layout title="Mi perfil">
+  <Page client:only="react" />
+</Layout>
