@@ -10,7 +10,7 @@ Tareas compartidas con recordatorios. Cada persona responde "¿cómo va?" (Ya lo
 | Login | Google Identity Services | Google Cloud Console |
 | Correos | SMTP de `jupeson@guiadeparche.com` | cPanel |
 | Calendario | Invitaciones `.ics` por correo (Gmail las agrega a Google Calendar) | — |
-| Recordatorios | Cron cada 5 min (`backend/cron/run.php`) | cPanel |
+| Recordatorios | Cron cada 5 min (`apiGuiadeparche/recordatorio/cron/run.php`) | cPanel |
 
 ```
 recordatorio-universal/
@@ -20,7 +20,7 @@ recordatorio-universal/
 │     ├─ components/  ← React (pages/, charts/ con canvas, Tour.tsx = tutoriales)
 │     ├─ stores/      ← nanostores (sesión, avisos, refresco)
 │     └─ lib/         ← api, zonas horarias, orden de prioridad, tutoriales
-├─ backend/           ← se sube tal cual a cPanel
+├─ apiGuiadeparche/recordatorio/           ← se sube tal cual a cPanel
 │  ├─ index.php       ← API (enrutador)
 │  ├─ routes/         ← endpoints
 │  ├─ src/            ← lógica (Auth, Google, Mailer SMTP, Ics, Notifier, TaskService)
@@ -54,7 +54,7 @@ recordatorio-universal/
 Sube el backend a una **carpeta nueva dentro de `api.guiadeparche.com`**, llamada `recordatorio`:
 
 ```
-/home/TU_USUARIO/api.guiadeparche.com/recordatorio/   ← aquí va el contenido de backend/
+/home/TU_USUARIO/api.guiadeparche.com/recordatorio/   ← aquí va el contenido de apiGuiadeparche/recordatorio/
 ```
 
 La URL queda `https://api.guiadeparche.com/recordatorio`. Así no se mezcla con lo que ya tienes en esa API, usa el mismo SSL y el correo `jupeson@guiadeparche.com` es del mismo dominio, lo que ayuda a que los correos no caigan en spam. `tatimonteroyoga.com` queda intacto.
@@ -63,9 +63,9 @@ La URL queda `https://api.guiadeparche.com/recordatorio`. Así no se mezcla con 
 
 ### Pasos
 1. **cPanel → MySQL® Databases**: crea la base `recordatorio`, un usuario y dale **ALL PRIVILEGES**.
-2. **cPanel → phpMyAdmin**: elige la base → **Importar** → `backend/sql/schema.sql`.
+2. **cPanel → phpMyAdmin**: elige la base → **Importar** → `apiGuiadeparche/recordatorio/sql/schema.sql`.
    Esto crea las tablas, los roles (Admin, Trabajador, Suspendido), los permisos y a `profesorjand@gmail.com` como admin principal.
-3. **cPanel → File Manager**: dentro de la carpeta de `api.guiadeparche.com` crea `recordatorio` y sube todo el contenido de `backend/` (puedes comprimirlo en .zip, subirlo y usar "Extract"). Revisa que se subieron los `.htaccess` (en File Manager: Settings → "Show Hidden Files").
+3. **cPanel → File Manager**: dentro de la carpeta de `api.guiadeparche.com` crea `recordatorio` y sube todo el contenido de `apiGuiadeparche/recordatorio/` (puedes comprimirlo en .zip, subirlo y usar "Extract"). Revisa que se subieron los `.htaccess` (en File Manager: Settings → "Show Hidden Files").
 4. Copia `config.example.php` como **`config.php`** y complétalo:
    - datos de la base,
    - `google_client_id`,
@@ -110,7 +110,7 @@ npm run dev               # http://localhost:4321/recordatorio-universal/
 
 El backend de GoDaddy ya acepta `http://localhost:4321` (está en `allowed_origins`), así que puedes desarrollar el frontend contra la API real.
 
-Para el backend en local (opcional) necesitas PHP 8.2 + MySQL (por ejemplo XAMPP o Laragon): `php -S localhost:8000 index.php` dentro de `backend/`.
+Para el backend en local (opcional) necesitas PHP 8.2 + MySQL (por ejemplo XAMPP o Laragon): `php -S localhost:8000 index.php` dentro de `apiGuiadeparche/recordatorio/`.
 
 ---
 
