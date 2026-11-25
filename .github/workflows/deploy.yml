@@ -34,8 +34,8 @@ jobs:
       - run: npm install
       - run: npm run build
         env:
-          PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
-          PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.PUBLIC_GOOGLE_CLIENT_ID }}
+          PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL || secrets.PUBLIC_API_URL }}
+          PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.PUBLIC_GOOGLE_CLIENT_ID || secrets.PUBLIC_GOOGLE_CLIENT_ID }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/dist
