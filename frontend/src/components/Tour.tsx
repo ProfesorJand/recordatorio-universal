@@ -15,6 +15,22 @@ export interface TourStep {
   target?: string; // valor de data-tour
   title: string;
   text: string;
+  /** Ejemplo que se muestra dentro de la tarjeta si el elemento no está en pantalla */
+  demo?: 'checkin';
+}
+
+/** Botones de ejemplo (no hacen nada) para explicar el "¿cómo va?" aunque no haya tareas */
+function DemoCheckin() {
+  return (
+    <div className="card" style={{ padding: '0.6rem', marginBottom: '0.8rem', background: 'var(--surface-2)' }} aria-hidden="true">
+      <div className="small" style={{ fontWeight: 600, marginBottom: 6 }}>Ejemplo: Entregar informe semanal</div>
+      <div className="row" style={{ gap: '0.35rem', pointerEvents: 'none' }}>
+        <span className="btn sm ok">✅ Ya lo hice</span>
+        <span className="btn sm">🔄 Sigo en eso</span>
+        <span className="btn sm">⏰ Aplazar ▾</span>
+      </div>
+    </div>
+  );
 }
 
 export default function Tour({ steps, onFinish }: { steps: TourStep[]; onFinish: () => void }) {
@@ -75,6 +91,7 @@ export default function Tour({ steps, onFinish }: { steps: TourStep[]; onFinish:
         <div className="tiny muted">Paso {i + 1} de {steps.length}</div>
         <h3>{step.title}</h3>
         <p>{step.text}</p>
+        {!rect && step.demo === 'checkin' && <DemoCheckin />}
         <div className="row between">
           <button className="btn sm ghost" onClick={onFinish}>Saltar tutorial</button>
           <div className="row">
