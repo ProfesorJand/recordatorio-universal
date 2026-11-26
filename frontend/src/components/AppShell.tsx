@@ -18,6 +18,7 @@ export const $tourRequest = atom<string | null>(null);
 
 const NAV: { key: string; href: string; label: string; perm?: string | string[] }[] = [
   { key: 'tareas', href: '/tareas/', label: '✅ Tareas' },
+  { key: 'calendario', href: '/calendario/', label: '📅 Calendario' },
   { key: 'proyectos', href: '/proyectos/', label: '📁 Proyectos' },
   { key: 'estadisticas', href: '/estadisticas/', label: '📊 Estadísticas', perm: ['estadisticas.ver_individual', 'estadisticas.ver_todos'] },
   { key: 'admin_usuarios', href: '/admin/usuarios/', label: '👥 Usuarios', perm: 'usuarios.gestionar' },

@@ -7,6 +7,7 @@ import { $directory, bumpRefresh, loadDirectory, toast, toastError } from '../st
 import { $user, myTz } from '../stores/session';
 import { toLocalInput, tzLabel } from '../lib/time';
 import { Confirm, Modal } from './ui';
+import { waLink } from '../lib/whatsapp';
 import ImageUpload from './ImageUpload';
 
 type Mode = 'create' | 'edit' | 'linked';
@@ -40,6 +41,8 @@ export default function TaskForm({ mode, task, parent, projectId, onClose, onSav
   const [supervisor, setSupervisor] = useState<number | ''>(task?.supervisor?.id ?? '');
   const [due, setDue] = useState(task?.due_at ? toLocalInput(task.due_at, tz) : '');
   const [reminder, setReminder] = useState<number | null>(task?.reminder_every_minutes ?? null);
+  const [reminderStart, setReminderStart] = useState(task?.reminder_start_at ? toLocalInput(task.reminder_start_at, tz) : '');
+  const [waTask, setWaTask] = useState<Task | null>(null);
   const [busy, setBusy] = useState(false);
   const [askNoSupervisor, setAskNoSupervisor] = useState(false);
   const descRef = useRef<HTMLTextAreaElement>(null);
@@ -85,6 +88,7 @@ export default function TaskForm({ mode, task, parent, projectId, onClose, onSav
       assignee_id: assignee || null,
       due_local: due || null,
       reminder_every_minutes: reminder,
+      reminder_start_local: reminder ? reminderStart || null : null,
     };
     if (mode !== 'linked') body.supervisor_id = supervisor || null;
     try {
@@ -95,6 +99,12 @@ export default function TaskForm({ mode, task, parent, projectId, onClose, onSav
       toast(mode === 'edit' ? 'Tarea actualizada' : mode === 'linked' ? 'Tarea pedida. Te avisaremos cuando la terminen.' : 'Tarea creada');
       bumpRefresh();
       onSaved?.(r.task);
+      // Urgente y con WhatsApp cargado: ofrecer avisarle por WhatsApp
+      const assignedChanged = mode !== 'edit' || task?.assignee?.id !== r.task.assignee?.id || task?.priority !== 'urgente';
+      if (r.task.priority === 'urgente' && r.task.assignee && r.task.assignee.id !== me?.id && waLink(r.task) && assignedChanged) {
+        setWaTask(r.task);
+        return;
+      }
       onClose();
     } catch (err) {
       toastError(err);
@@ -173,12 +183,38 @@ export default function TaskForm({ mode, task, parent, projectId, onClose, onSav
             </select>
             <div className="hint">Si tiene fecha límite, igual avisamos 24 h y 1 h antes.</div>
           </div>
+          {reminder !== null && (
+            <div className="field">
+              <label>Empezar a recordar desde (opcional)</label>
+              <input type="datetime-local" value={reminderStart} onChange={(e) => setReminderStart(e.target.value)} max={due || undefined} />
+              {due && (
+                <div className="row" style={{ gap: 4, marginTop: 4 }}>
+                  {[1, 3, 7, 14].map((d) => (
+                    <button type="button" key={d} className="btn sm" onClick={() => setReminderStart(daysBefore(due, d))}>
+                      {d === 1 ? '1 día' : d === 7 ? '1 semana' : d === 14 ? '2 semanas' : `${d} días`} antes
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="hint">Vacío = empieza ahora. Ej: entrega el 1 de enero, recordar cada día desde el 25 de diciembre.</div>
+            </div>
+          )}
         </div>
         <div className="row" style={{ justifyContent: 'flex-end', marginTop: '0.5rem' }}>
           <button type="button" className="btn" onClick={onClose}>Cancelar</button>
           <button className="btn primary" disabled={busy}>{busy ? 'Guardando…' : mode === 'edit' ? 'Guardar cambios' : mode === 'linked' ? 'Pedir tarea' : 'Crear tarea'}</button>
         </div>
       </form>
+
+      {waTask && (
+        <Confirm
+          title="¿Avisar también por WhatsApp?"
+          text={<p>La tarea es <strong>urgente</strong>. Puedes abrir WhatsApp con el mensaje ya escrito para <strong>{waTask.assignee?.name}</strong>; solo tienes que tocar "Enviar".</p>}
+          confirmLabel="💬 Abrir WhatsApp"
+          onConfirm={() => { window.open(waLink(waTask)!, '_blank', 'noopener'); onClose(); }}
+          onCancel={onClose}
+        />
+      )}
 
       {askNoSupervisor && (
         <Confirm
@@ -191,4 +227,11 @@ export default function TaskForm({ mode, task, parent, projectId, onClose, onSav
       )}
     </Modal>
   );
+}
+
+/** "2027-01-01T10:00" menos N días (en la misma hora de pared) */
+function daysBefore(local: string, days: number): string {
+  const d = new Date(local + ':00Z'); // se trata como UTC solo para restar días sin efecto de zona
+  d.setUTCDate(d.getUTCDate() - days);
+  return d.toISOString().slice(0, 16);
 }

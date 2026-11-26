@@ -22,6 +22,10 @@ export const TOURS: Record<string, TourStep[]> = {
     { target: 'linked', title: '¿Necesitas a alguien más?', text: 'Si para terminar necesitas que otra persona haga algo, pídele una tarea vinculada. Tu tarea queda "esperando" y te avisamos cuando la terminen.' },
     { target: 'comments', title: 'Comentarios', text: 'Deja comentarios con enlaces o imágenes. Le avisamos al supervisor y a la persona asignada.' },
   ],
+  calendario: [
+    { target: 'calendar', title: 'Calendario de entregas', text: 'Cada tarea aparece el día de su fecha límite, en tu hora. El borde de color es la prioridad y en rojo las vencidas.' },
+    { target: 'cal-nav', title: 'Moverte entre meses', text: 'Cambia de mes con las flechas. Toca un día para ver solo las entregas de ese día debajo del calendario.' },
+  ],
   proyectos: [
     { target: 'projects', title: 'Proyectos', text: 'Cada tarea pertenece a un proyecto. Solo ves los proyectos donde eres miembro.' },
     { target: 'new-project', title: 'Crear proyecto (admin)', text: 'Los administradores crean proyectos y eligen quiénes participan.' },

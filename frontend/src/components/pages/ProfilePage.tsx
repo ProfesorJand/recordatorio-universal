@@ -119,9 +119,9 @@ function ProfileContent() {
         </label>
         <p className="hint">Las fechas límite te llegan como invitación de Google Calendar, así tu celular te avisa.</p>
         <div className="field" style={{ marginTop: 10 }}>
-          <label>WhatsApp (próximamente)</label>
-          <input type="tel" placeholder="+57 300 000 0000" value={phone} onChange={(e) => setPhone(e.target.value)} />
-          <div className="hint">Lo guardamos para cuando se active WhatsApp.</div>
+          <label>WhatsApp</label>
+          <input type="tel" placeholder="+54 9 11 2233 4455" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <div className="hint">Con código de país. Se usa para que te avisen por WhatsApp de las tareas urgentes (botón "WhatsApp" en la tarea).</div>
         </div>
         <div className="row">
           <span className="small">Avisos del navegador: {browserPerm === 'granted' ? '✅ activados' : browserPerm === 'denied' ? '🚫 bloqueados' : 'sin activar'}</span>

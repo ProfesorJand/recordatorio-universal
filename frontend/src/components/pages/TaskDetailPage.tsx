@@ -13,7 +13,8 @@ import type { Person, Task } from '../../lib/types';
 import { reminderLabel } from '../../lib/priority';
 import { formatDateTime, relative, shortTz, tzDifference } from '../../lib/time';
 import { $refresh, bumpRefresh, toast, toastError } from '../../stores/app';
-import { myTz } from '../../stores/session';
+import { $user, myTz } from '../../stores/session';
+import { waLink } from '../../lib/whatsapp';
 
 interface Detail {
   task: Task;
@@ -27,7 +28,7 @@ interface Detail {
 const ACTION_LABEL: Record<string, string> = {
   creada: 'creó la tarea', creada_vinculada: 'pidió esta tarea', editada: 'editó', completada: 'la completó',
   aplazada: 'la aplazó', sigue: 'dijo que sigue en eso', empezada: 'la empezó', comentario: 'comentó',
-  bloqueada: 'quedó esperando', desbloqueada: 'se desbloqueó', aviso: 'aviso',
+  bloqueada: 'quedó esperando', fecha_cambiada: 'cambió la fecha límite', desbloqueada: 'se desbloqueó', aviso: 'aviso',
 };
 
 function PersonRow({ label, p }: { label: string; p: Person | null }) {
@@ -104,6 +105,8 @@ function TaskDetailContent() {
   if (!d) return <Loading />;
   const t = d.task;
   const otherTz = t.due_tz && t.due_tz !== tz ? t.due_tz : null;
+  const me = $user.get();
+  const wa = waLink(t);
 
   return (
     <>
@@ -122,6 +125,11 @@ function TaskDetailContent() {
             {t.due_at && (
               <div className="small" style={{ marginTop: 6 }}>
                 <DueDate task={t} compact />
+                {t.due_changes > 0 && t.original_due_at && (
+                  <div className="small" style={{ marginTop: 6, background: '#fff5e0', border: '1px solid #f7dca3', color: '#8a5a00', padding: '6px 10px', borderRadius: 8, display: 'inline-block' }}>
+                    📅 La fecha límite se cambió {t.due_changes} {t.due_changes === 1 ? 'vez' : 'veces'}. Fecha original: {formatDateTime(t.original_due_at, tz, true)}
+                  </div>
+                )}
                 {otherTz && (
                   <div className="tiny muted" style={{ marginTop: 4 }}>
                     Quien fijó la fecha está en {otherTz}: allí será {formatDateTime(t.due_at, otherTz)} ({tzDifference(tz, otherTz)} respecto a ti).
@@ -133,6 +141,9 @@ function TaskDetailContent() {
           <div className="row">
             {d.can.edit && <button className="btn sm" onClick={() => setEditing(true)}>✏️ Editar</button>}
             {d.can.edit && t.status === 'completada' && <button className="btn sm" onClick={reopen}>↩ Reabrir</button>}
+            {wa && t.status !== 'completada' && t.assignee?.id !== me?.id && (
+              <a className="btn sm" href={wa} target="_blank" rel="noopener noreferrer" title={`Abrir WhatsApp con ${t.assignee?.name}`}>💬 WhatsApp</a>
+            )}
             {d.can.delete && <button className="btn sm danger" onClick={() => setDeleting(true)}>🗑</button>}
           </div>
         </div>
@@ -202,7 +213,9 @@ function TaskDetailContent() {
           <div className="card small">
             <div className="tiny muted">Recordatorio</div>
             <div>{reminderLabel(t.reminder_every_minutes)}</div>
+            {t.reminder_start_at && t.reminder_every_minutes && <div className="tiny muted">Desde {formatDateTime(t.reminder_start_at, tz)}</div>}
             {t.next_checkin_at && t.status !== 'completada' && <div className="tiny muted">Próximo: {relative(t.next_checkin_at)}</div>}
+            {t.defer_count > 0 && <div className="tiny" style={{ marginTop: 6 }}>⏰ Aplazada {t.defer_count} {t.defer_count === 1 ? 'vez' : 'veces'}</div>}
             {t.status === 'aplazada' && t.deferred_until && <div className="tiny muted">Aplazada hasta {formatDateTime(t.deferred_until, tz)}</div>}
             {t.last_checkin_at && <div className="tiny muted" style={{ marginTop: 6 }}>Última respuesta: {t.last_checkin_response} ({relative(t.last_checkin_at)})</div>}
           </div>

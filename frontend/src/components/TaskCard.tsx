@@ -27,6 +27,12 @@ export default function TaskCard({ task, showProject = true }: { task: Task; sho
           )}
           {task.parent_task_id && <span className="chip" title="La pidieron desde otra tarea">🔗 vinculada</span>}
           {task.children_open > 0 && <span className="chip">⛓ espera {task.children_open}</span>}
+          {task.due_changes > 0 && (
+            <span className="chip soon" title="Veces que se cambió la fecha límite">📅 fecha cambiada {task.due_changes}×</span>
+          )}
+          {task.defer_count >= 3 && task.status !== 'completada' && (
+            <span className="chip" title="Veces que se aplazó el recordatorio">⏰ aplazada {task.defer_count}×</span>
+          )}
         </div>
         <div className="tiny muted" style={{ marginTop: 4 }}>
           {task.assignee ? (mine ? 'Asignada a ti' : `Asignada a ${task.assignee.name}`) : 'Sin asignar'}

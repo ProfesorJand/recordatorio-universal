@@ -9,6 +9,7 @@ export interface Person {
   email: string;
   picture?: string | null;
   timezone?: string | null;
+  whatsapp_phone?: string | null;
 }
 
 export interface User {
@@ -42,6 +43,10 @@ export interface Task {
   due_at: string | null; // ISO UTC
   due_tz: string | null; // zona de quien fijó la fecha
   reminder_every_minutes: number | null;
+  reminder_start_at: string | null; // desde cuándo recordar
+  original_due_at: string | null; // primera fecha límite
+  due_changes: number; // cuántas veces se cambió la fecha límite
+  defer_count: number; // cuántas veces se aplazó el recordatorio
   next_checkin_at: string | null;
   deferred_until: string | null;
   last_checkin_response: string | null;
