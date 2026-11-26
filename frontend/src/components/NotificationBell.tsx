@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { api } from '../lib/api';
-import { url } from '../lib/config';
 import { relative } from '../lib/time';
+import { go } from '../lib/nav';
 import { $notifications, $unread, loadNotifications } from '../stores/app';
 import CheckinButtons from './CheckinButtons';
 
@@ -26,7 +26,10 @@ export default function NotificationBell() {
 
   async function openTask(id: number, taskId?: number) {
     await api(`/notifications/${id}/read`, { method: 'POST' }).catch(() => {});
-    if (taskId) window.location.href = url(`/tarea/?id=${taskId}`);
+    if (taskId) {
+      setOpen(false);
+      go(`/tarea/?id=${taskId}`);
+    }
     else loadNotifications();
   }
 

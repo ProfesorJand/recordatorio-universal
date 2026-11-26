@@ -161,3 +161,27 @@ Para el backend en local (opcional) necesitas PHP 8.2 + MySQL (por ejemplo XAMPP
 ### Pendiente / siguientes pasos
 - WhatsApp: requiere una cuenta de Meta Business verificada. El código ya guarda el teléfono de cada usuario y tiene el lugar marcado en `Notifier::notify()`.
 - Versión de escritorio (opcional): envolver el sitio con Tauri o Electron, o simplemente "Instalar app" desde Chrome (ya tiene `manifest.webmanifest`).
+
+---
+
+## Google Calendar (eventos, cumpleaños y Google Tasks)
+
+Cada persona puede vincular su Google Calendar desde la página **Calendario**. Es **solo lectura**: la app no modifica nada en Google.
+
+### Configuración (una vez)
+1. Google Cloud Console → **APIs y servicios → Biblioteca**: habilita **Google Calendar API** y **Google Tasks API**.
+2. **Acceso a los datos → Agregar o quitar permisos**: agrega
+   - `https://www.googleapis.com/auth/calendar.readonly`
+   - `https://www.googleapis.com/auth/tasks.readonly`
+3. **Clientes** → tu cliente web → copia el **Secreto del cliente** (`GOCSPX-...`).
+4. En `config.php` (solo en el servidor):
+   - `'google_client_secret' => 'GOCSPX-...'`
+   - `'app_key' => '...'` (64 caracteres al azar; cifra los tokens guardados. No la cambies después o habrá que volver a vincular).
+5. Ejecuta `sql/migracion_003.sql` en phpMyAdmin.
+
+### App "sin verificar"
+Mientras la app esté **En producción** pero sin verificar por Google:
+- Al vincular, Google muestra *"Google no verificó esta app"*. Se continúa con **Configuración avanzada → Ir a Recordatorio Universal (no seguro)**. Es normal: la app es tuya.
+- Máximo **100 personas** pueden vincular su calendario.
+- La conexión **no vence cada 7 días** (eso solo pasa en "modo de prueba"). Puede vencer si se cambia la contraseña de Google, se revoca el acceso o pasan 6 meses sin uso; en ese caso aparece de nuevo el botón **Vincular**.
+- No hace falta dominio propio, página de privacidad ni video: eso solo se pide si algún día envías la app a verificación.

@@ -4,6 +4,7 @@ import ProjectForm from '../ProjectForm';
 import { Empty, Loading } from '../ui';
 import { api } from '../../lib/api';
 import { url } from '../../lib/config';
+import { go } from '../../lib/nav';
 import type { Project } from '../../lib/types';
 import { toastError } from '../../stores/app';
 import { can } from '../../stores/session';
@@ -46,7 +47,7 @@ function ProjectsContent() {
           ))}
         </div>
       )}
-      {creating && <ProjectForm onClose={() => setCreating(false)} onSaved={(p) => (window.location.href = url(`/proyecto/?id=${p.id}`))} />}
+      {creating && <ProjectForm onClose={() => setCreating(false)} onSaved={(p) => go(`/proyecto/?id=${p.id}`)} />}
     </>
   );
 }

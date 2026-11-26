@@ -1,5 +1,5 @@
 import AppShell, { $tourRequest } from '../AppShell';
-import { url } from '../../lib/config';
+import { go } from '../../lib/nav';
 import { can } from '../../stores/session';
 
 const GUIDES: { title: string; body: string[]; tour?: string; href?: string; perm?: string }[] = [
@@ -67,7 +67,7 @@ function startTour(key: string, href?: string) {
   // El tutorial se muestra en su página: si no estamos ahí, vamos y se inicia solo
   if (href && !window.location.pathname.includes(href.replace(/\/$/, ''))) {
     sessionStorage.setItem('ru_tour', key);
-    window.location.href = url(href);
+    go(href);
     return;
   }
   $tourRequest.set(key);

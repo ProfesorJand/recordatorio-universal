@@ -15,6 +15,7 @@ import { formatDateTime, relative, shortTz, tzDifference } from '../../lib/time'
 import { $refresh, bumpRefresh, markTaskSeen, toast, toastError } from '../../stores/app';
 import { $user, myTz } from '../../stores/session';
 import { waLink } from '../../lib/whatsapp';
+import { go } from '../../lib/nav';
 
 interface Detail {
   task: Task;
@@ -90,7 +91,7 @@ function TaskDetailContent() {
     try {
       await api(`/tasks/${id}`, { method: 'DELETE' });
       toast('Tarea eliminada');
-      window.location.href = url('/tareas/');
+      go('/tareas/');
     } catch (e) {
       toastError(e);
     }

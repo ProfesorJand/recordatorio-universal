@@ -182,3 +182,4 @@ th { color: var(--text-2); font-weight: 600; font-size: 0.8rem; }
 .alert-bar.urgent { background: #fdecec; border-bottom-color: #f5c2c2; animation: pulse-bg 1.6s ease-in-out infinite; }
 @keyframes pulse-bg { 50% { background: #fbd9d9; } }
 @media (prefers-reduced-motion: reduce) { .alert-bar.urgent { animation: none; } }
+.cal-g { background-image: repeating-linear-gradient(135deg, transparent 0 4px, rgba(0,0,0,0.035) 4px 8px); }

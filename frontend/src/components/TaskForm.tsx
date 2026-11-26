@@ -19,13 +19,15 @@ type Mode = 'create' | 'edit' | 'linked';
  *  - linked: desde su tarea, el trabajador le pide una tarea a otra persona
  *            (el que la pide queda como supervisor automáticamente)
  */
-export default function TaskForm({ mode, task, parent, projectId, onClose, onSaved }: {
+export default function TaskForm({ mode, task, parent, projectId, initial, onClose, onSaved }: {
   mode: Mode;
   task?: Task;
   parent?: Task;
   projectId?: number;
   onClose: () => void;
   onSaved?: (t: Task) => void;
+  /** Valores iniciales (ej: al convertir un evento de Google en tarea) */
+  initial?: { title?: string; description?: string; due_local?: string };
 }) {
   const me = useStore($user);
   const directory = useStore($directory);
@@ -34,12 +36,12 @@ export default function TaskForm({ mode, task, parent, projectId, onClose, onSav
   const [projects, setProjects] = useState<Project[]>([]);
   const [members, setMembers] = useState<Person[]>([]);
   const [projId, setProjId] = useState<number | ''>(task?.project.id ?? parent?.project.id ?? projectId ?? '');
-  const [title, setTitle] = useState(task?.title ?? '');
-  const [description, setDescription] = useState(task?.description ?? '');
+  const [title, setTitle] = useState(task?.title ?? initial?.title ?? '');
+  const [description, setDescription] = useState(task?.description ?? initial?.description ?? '');
   const [priority, setPriority] = useState<Priority>(task?.priority ?? parent?.priority ?? 'B');
   const [assignee, setAssignee] = useState<number | ''>(task?.assignee?.id ?? '');
   const [supervisor, setSupervisor] = useState<number | ''>(task?.supervisor?.id ?? '');
-  const [due, setDue] = useState(task?.due_at ? toLocalInput(task.due_at, tz) : '');
+  const [due, setDue] = useState(task?.due_at ? toLocalInput(task.due_at, tz) : initial?.due_local ?? '');
   const [reminder, setReminder] = useState<number | null>(task?.reminder_every_minutes ?? null);
   const [reminderStart, setReminderStart] = useState(task?.reminder_start_at ? toLocalInput(task.reminder_start_at, tz) : '');
   const [waTask, setWaTask] = useState<Task | null>(null);

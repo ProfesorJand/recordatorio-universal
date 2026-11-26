@@ -11,6 +11,8 @@ import { $snoozeUntil, alarmTick, isUrgentAlarm, snooze, unsnooze } from '../sto
 import { unlockAudio } from '../lib/sound';
 import { Avatar, Spinner, Toasts } from './ui';
 import NotificationBell from './NotificationBell';
+import { FloatingBellButton, closePip } from './FloatingBell';
+import { go } from '../lib/nav';
 import CheckinButtons from './CheckinButtons';
 import TimezoneModal from './TimezoneModal';
 import Tour from './Tour';
@@ -128,6 +130,7 @@ export default function AppShell({ page, children }: { page: string; children: R
       /* igual cerramos */
     }
     clearSession();
+    closePip();
     window.google?.accounts?.id?.disableAutoSelect?.();
     window.location.href = url('/');
   }
@@ -158,6 +161,7 @@ export default function AppShell({ page, children }: { page: string; children: R
             </a>
           ))}
         </nav>
+        <FloatingBellButton />
         <NotificationBell />
         <div className="dropdown" ref={menuRef}>
           <button className="btn ghost" style={{ padding: 4 }} onClick={() => setMenu(!menu)} aria-label="Mi cuenta" data-tour="profile-link">
@@ -169,7 +173,7 @@ export default function AppShell({ page, children }: { page: string; children: R
                 <strong>{user.name || user.email}</strong>
                 <div className="tiny muted">{user.email} · {user.role.name}</div>
               </div>
-              <button onClick={() => (window.location.href = url('/perfil/'))}>⚙️ Mi perfil y horario</button>
+              <button onClick={() => go('/perfil/')}>⚙️ Mi perfil y horario</button>
               <button onClick={logout}>🚪 Cerrar sesión</button>
             </div>
           )}

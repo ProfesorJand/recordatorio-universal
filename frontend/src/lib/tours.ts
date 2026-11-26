@@ -13,6 +13,7 @@ export const TOURS: Record<string, TourStep[]> = {
     { target: 'list', title: 'Ordenadas por importancia', text: 'Arriba siempre van las vencidas, luego las urgentes, luego las que vencen en menos de 48 h y después por Tier S, A, B, C.' },
     { target: 'checkin', demo: 'checkin', title: '¿Cómo va?', text: 'En tus tareas tienes estos botones: "Ya lo hice", "Sigo en eso" o "Aplazar". La app te irá preguntando y también te llegarán al correo.' },
     { target: 'bell', title: 'Avisos', text: 'En la campanita ves tus avisos. Si no respondes una alerta en 30 minutos, te la mandamos también por correo.' },
+    { target: 'pip', title: 'Ventana flotante', text: 'Con este botón abres una mini ventana que queda siempre encima de todo, aunque estés en otro programa. Ahí ves las alertas y respondes sin volver a la app. Puedes moverla donde no moleste.' },
     { target: 'profile-link', title: 'Tu horario', text: 'En tu perfil elige tu zona horaria y tu horario de trabajo: fuera de ese horario no te llegan avisos.' },
   ],
   tarea: [
@@ -23,6 +24,7 @@ export const TOURS: Record<string, TourStep[]> = {
     { target: 'comments', title: 'Comentarios', text: 'Deja comentarios con enlaces o imágenes. Le avisamos al supervisor y a la persona asignada.' },
   ],
   calendario: [
+    { target: 'google', title: 'Tu Google Calendar', text: 'Vincula tu cuenta para ver aquí tus eventos, cumpleaños y Google Tasks junto a las entregas. Es solo lectura. Si la conexión vence, vuelve a tocar el botón.' },
     { target: 'calendar', title: 'Calendario de entregas', text: 'Cada tarea aparece el día de su fecha límite, en tu hora. El borde de color es la prioridad y en rojo las vencidas.' },
     { target: 'cal-nav', title: 'Moverte entre meses', text: 'Cambia de mes con las flechas. Toca un día para ver solo las entregas de ese día debajo del calendario.' },
   ],
