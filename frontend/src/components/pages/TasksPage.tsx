@@ -22,6 +22,7 @@ function TasksContent() {
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(false);
+  const [toReview, setToReview] = useState<Task[]>([]);
 
   useEffect(() => {
     api<{ projects: Project[] }>('/projects').then((r) => setProjects(r.projects)).catch(toastError);
@@ -33,6 +34,11 @@ function TasksContent() {
     if (projectId) qs.set('project_id', projectId);
     api<{ tasks: Task[] }>(`/tasks?${qs}`).then((r) => setTasks(r.tasks)).catch(toastError);
   }, [scope, projectId, refresh]);
+
+  // Entregas que yo tengo que revisar (sin importar la pestaña elegida)
+  useEffect(() => {
+    api<{ tasks: Task[] }>('/tasks?scope=supervising').then((r) => setToReview(r.tasks.filter((t) => t.status === 'en_revision'))).catch(() => {});
+  }, [refresh]);
 
   const timer = useStore($timer);
   const currentId = timer.running ? timer.task?.id : undefined;
@@ -46,6 +52,7 @@ function TasksContent() {
       active: sortTasks(list.filter((t) => (t.status === 'pendiente' || t.status === 'en_progreso') && t.id !== currentId)),
       blocked: sortTasks(list.filter((t) => t.status === 'bloqueada')),
       deferred: sortTasks(list.filter((t) => t.status === 'aplazada')),
+      review: list.filter((t) => t.status === 'en_revision'),
       done: list.filter((t) => t.status === 'completada').sort((a, b) => (b.completed_at || '').localeCompare(a.completed_at || '')),
     };
   }, [tasks, search, currentId]);
@@ -87,6 +94,13 @@ function TasksContent() {
             </div>
           )}
 
+          {toReview.length > 0 && (
+            <div data-tour="to-review">
+              <h2>🔍 Para revisar ({toReview.length})</h2>
+              <div className="grid">{toReview.map((t) => <TaskCard key={t.id} task={t} />)}</div>
+            </div>
+          )}
+
           <h2>Para hacer ({groups.active.length})</h2>
           {groups.active.length === 0
             ? <Empty>{scope === 'mine' ? '¡No tienes tareas pendientes! 🎉' : 'No hay tareas pendientes.'}</Empty>
@@ -96,6 +110,12 @@ function TasksContent() {
             <>
               <h2>⛓ Esperando otra tarea ({groups.blocked.length})</h2>
               <div className="grid">{groups.blocked.map((t) => <TaskCard key={t.id} task={t} />)}</div>
+            </>
+          )}
+          {groups.review.filter((t) => !toReview.some((r) => r.id === t.id)).length > 0 && (
+            <>
+              <h2>🔍 Entregadas, esperando revisión</h2>
+              <div className="grid">{groups.review.filter((t) => !toReview.some((r) => r.id === t.id)).map((t) => <TaskCard key={t.id} task={t} />)}</div>
             </>
           )}
           {groups.deferred.length > 0 && (

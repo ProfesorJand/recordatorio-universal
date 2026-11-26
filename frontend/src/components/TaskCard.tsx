@@ -4,6 +4,7 @@ import { $user } from '../stores/session';
 import type { Task } from '../lib/types';
 import { Avatar, DueDate, PriorityChip, StatusChip } from './ui';
 import CheckinButtons from './CheckinButtons';
+import ReviewButtons from './ReviewButtons';
 import { fmtClock, fmtDuration, relative } from '../lib/time';
 import { $timer, liveSeconds, stopTimer } from '../stores/timer';
 import { useTick } from './Timer';
@@ -50,6 +51,12 @@ export default function TaskCard({ task, showProject = true }: { task: Task; sho
           {task.supervisor && ` · Supervisa ${task.supervisor.id === me?.id ? 'tú' : task.supervisor.name}`}
           {task.status === 'aplazada' && task.deferred_until && ` · vuelve ${relative(task.deferred_until)}`}
         </div>
+        {task.status === 'en_revision' && task.supervisor?.id === me?.id && (
+          <div style={{ marginTop: 8 }}>
+            <ReviewButtons taskId={task.id} status={task.status} />
+          </div>
+        )}
+        {task.returned_count > 0 && task.status !== 'completada' && <div className="tiny" style={{ marginTop: 4, color: '#b22a2b' }}>↩ devuelta {task.returned_count}×</div>}
         {mine && task.status !== 'completada' && (
           <div style={{ marginTop: 8 }}>
             <CheckinButtons taskId={task.id} status={task.status} />

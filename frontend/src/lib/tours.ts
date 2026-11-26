@@ -11,6 +11,7 @@ export const TOURS: Record<string, TourStep[]> = {
     { target: 'nav', title: 'El menú', text: 'Aquí cambias entre tus tareas, los proyectos, tus estadísticas, tu perfil y la ayuda.' },
     { target: 'scope', title: 'Qué tareas ver', text: '"Mis tareas" son las asignadas a ti. "Superviso" son las que tú pediste o supervisas. "Todas" muestra todo lo de tus proyectos.' },
     { target: 'list', title: 'Ordenadas por importancia', text: 'Arriba siempre van las vencidas, luego las urgentes, luego las que vencen en menos de 48 h y después por Tier S, A, B, C.' },
+    { target: 'to-review', title: 'Para revisar', text: 'Si eres supervisor, aquí aparecen las entregas que esperan tu aprobación. Apruébalas o devuélvelas con un comentario. Te lo recordamos cada hora.' },
     { target: 'checkin', demo: 'checkin', title: '¿Cómo va?', text: 'En tus tareas tienes estos botones: "Ya lo hice", "Sigo en eso" o "Aplazar". La app te irá preguntando y también te llegarán al correo.' },
     { target: 'bell', title: 'Avisos', text: 'En la campanita ves tus avisos. Si no respondes una alerta en 30 minutos, te la mandamos también por correo.' },
     { target: 'pip', title: 'Ventana flotante', text: 'Con este botón abres una mini ventana que queda siempre encima de todo, aunque estés en otro programa. Ahí ves las alertas y respondes sin volver a la app. Puedes moverla donde no moleste.' },

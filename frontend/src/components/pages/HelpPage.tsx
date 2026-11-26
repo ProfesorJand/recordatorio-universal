@@ -33,6 +33,8 @@ const GUIDES: { title: string; body: string[]; tour?: string; href?: string; per
     title: '👁 Supervisor',
     body: [
       'El supervisor es la persona que recibe el aviso cuando la tarea se termina, y también los comentarios.',
+      'Si la tarea tiene marcada "Requiere revisión" (viene marcada al elegir supervisor), al tocar "Ya lo hice" queda 🔍 En revisión: el supervisor la aprueba o la devuelve con un comentario. Se le recuerda cada hora.',
+      'Para medir si se entregó a tiempo cuenta el momento de la entrega, no el de la aprobación. El cronómetro se detiene al entregar.',
       'Es opcional: si se crea una tarea sin supervisor, la app avisa antes de guardarla.',
     ],
   },

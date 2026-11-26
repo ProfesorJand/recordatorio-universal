@@ -1,7 +1,7 @@
 // Tipos compartidos (lo que devuelve la API PHP)
 
 export type Priority = 'urgente' | 'S' | 'A' | 'B' | 'C';
-export type Status = 'pendiente' | 'en_progreso' | 'aplazada' | 'bloqueada' | 'completada';
+export type Status = 'pendiente' | 'en_progreso' | 'aplazada' | 'bloqueada' | 'en_revision' | 'completada';
 
 export interface Person {
   id: number;
@@ -53,6 +53,9 @@ export interface Task {
   last_checkin_response: string | null;
   last_checkin_at: string | null;
   completed_at: string | null;
+  requires_review: boolean; // el supervisor aprueba la entrega
+  delivered_at: string | null; // cuándo la entregó la persona asignada
+  returned_count: number; // veces que el supervisor la devolvió
   created_at: string;
   updated_at: string;
   children_open: number; // tareas de las que depende que siguen sin terminar

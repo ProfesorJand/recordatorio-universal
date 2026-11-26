@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import DateTimeInput from './DateTimeInput';
 import { useStore } from '@nanostores/react';
 import { api } from '../lib/api';
 import type { Task } from '../lib/types';
@@ -177,8 +178,8 @@ function EditEntryModal({ entry, onClose, onSaved }: { entry: Entry; onClose: ()
     <Modal title="Corregir tramo" onClose={onClose}>
       <form onSubmit={submit}>
         <div className="row">
-          <div><label>Inicio (tu hora)</label><input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} /></div>
-          <div><label>Fin (tu hora)</label><input type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} /></div>
+          <div><label>Inicio (tu hora)</label><DateTimeInput value={start} onChange={setStart} /></div>
+          <div><label>Fin (tu hora)</label><DateTimeInput value={end} onChange={setEnd} /></div>
         </div>
         <div className="field" style={{ marginTop: 10 }}>
           <label>Motivo (obligatorio)</label>

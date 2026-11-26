@@ -4,7 +4,7 @@ import { api } from '../lib/api';
 import { relative } from '../lib/time';
 import { go } from '../lib/nav';
 import { $notifications, $unread, loadNotifications } from '../stores/app';
-import CheckinButtons from './CheckinButtons';
+import AlertActions, { isReviewAlert } from './AlertActions';
 
 export default function NotificationBell() {
   const list = useStore($notifications);
@@ -53,9 +53,9 @@ export default function NotificationBell() {
                 {n.body && <div className="tiny muted" style={{ marginTop: 2 }}>{n.body.length > 160 ? n.body.slice(0, 160) + '…' : n.body}</div>}
                 <div className="tiny muted" style={{ marginTop: 2 }}>{relative(n.created_at)}</div>
               </div>
-              {n.actionable && n.task && (
+              {n.task && (n.actionable || isReviewAlert(n)) && (
                 <div style={{ marginTop: 6 }}>
-                  <CheckinButtons taskId={n.task.id} status={n.task.status} />
+                  <AlertActions n={n} />
                 </div>
               )}
             </div>

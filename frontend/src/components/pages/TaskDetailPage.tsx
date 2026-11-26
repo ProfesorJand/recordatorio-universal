@@ -5,6 +5,7 @@ import TaskForm from '../TaskForm';
 import TaskCard from '../TaskCard';
 import DepTree, { countChain, type DepNode } from '../DepTree';
 import TimeCard from '../TimeCard';
+import ReviewButtons from '../ReviewButtons';
 import RichText from '../RichText';
 import ImageUpload from '../ImageUpload';
 import CheckinButtons from '../CheckinButtons';
@@ -27,7 +28,7 @@ interface Detail {
   blocking: Task[];
   comments: { id: number; body: string; created_at: string; user: { id: number; name: string; picture: string | null } }[];
   activity: { action: string; detail: string | null; created_at: string; user: string }[];
-  can: { edit: boolean; checkin: boolean; link: boolean; comment: boolean; delete: boolean };
+  can: { edit: boolean; checkin: boolean; link: boolean; comment: boolean; delete: boolean; review: boolean };
 }
 
 const ACTION_LABEL: Record<string, string> = {
@@ -101,14 +102,6 @@ function TaskDetailContent() {
     }
   }
 
-  async function reopen() {
-    try {
-      await api(`/tasks/${id}`, { method: 'PATCH', body: { status: 'en_progreso' } });
-      bumpRefresh();
-    } catch (e) {
-      toastError(e);
-    }
-  }
 
   if (notFound) return <Empty>{notFound}. <a href={url('/tareas/')}>Volver a las tareas</a></Empty>;
   if (!d) return <Loading />;
@@ -149,7 +142,6 @@ function TaskDetailContent() {
           </div>
           <div className="row">
             {d.can.edit && <button className="btn sm" onClick={() => setEditing(true)}>✏️ Editar</button>}
-            {d.can.edit && t.status === 'completada' && <button className="btn sm" onClick={reopen}>↩ Reabrir</button>}
             {wa && t.status !== 'completada' && t.assignee?.id !== me?.id && (
               <a className="btn sm" href={wa} target="_blank" rel="noopener noreferrer" title={`Abrir WhatsApp con ${t.assignee?.name}`}>💬 WhatsApp</a>
             )}
@@ -161,9 +153,26 @@ function TaskDetailContent() {
             <CheckinButtons taskId={t.id} status={t.status} size="md" onDone={load} />
           </div>
         )}
-        {t.status === 'completada' && t.completed_at && (
-          <p className="small" style={{ color: 'var(--ok)', marginBottom: 0 }}>✅ Completada {formatDateTime(t.completed_at, tz)}</p>
+        {t.status === 'en_revision' && (
+          <div className="review-box">
+            <div className="small">
+              🔍 <strong>Entregada {t.delivered_at ? formatDateTime(t.delivered_at, tz) : ''}</strong>
+              {' '}— esperando la revisión de {t.supervisor?.id === me?.id ? 'ti' : t.supervisor?.name || 'el supervisor'}.
+              {t.due_at && t.delivered_at && <span className="muted"> {t.delivered_at > t.due_at ? '(entregada tarde)' : '(entregada a tiempo)'}</span>}
+            </div>
+            {d.can.review && <div style={{ marginTop: 8 }}><ReviewButtons taskId={t.id} status={t.status} onDone={load} /></div>}
+          </div>
         )}
+        {t.status === 'completada' && t.completed_at && (
+          <div className="row" style={{ marginTop: 10 }}>
+            <span className="small" style={{ color: 'var(--ok)' }}>
+              ✅ Completada {formatDateTime(t.completed_at, tz)}
+              {t.delivered_at && t.delivered_at !== t.completed_at && <span className="muted"> (entregada {formatDateTime(t.delivered_at, tz)})</span>}
+            </span>
+            {d.can.review && <ReviewButtons taskId={t.id} status={t.status} onDone={load} />}
+          </div>
+        )}
+        {t.returned_count > 0 && <div className="tiny" style={{ marginTop: 6 }}>↩ Devuelta {t.returned_count} {t.returned_count === 1 ? 'vez' : 'veces'} por el supervisor</div>}
       </div>
 
       <div className="grid detail-grid" style={{ marginTop: '0.75rem' }}>

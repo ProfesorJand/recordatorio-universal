@@ -200,3 +200,4 @@ th { color: var(--text-2); font-weight: 600; font-size: 0.8rem; }
 @media (max-width: 760px) { .timer-title { display: none; } }
 .task.running { box-shadow: 0 0 0 2px var(--primary), var(--shadow); background: #f5f9ff; }
 .chip.live { background: #e8f1fc; border-color: #b6d5f8; color: var(--primary-dark); font-variant-numeric: tabular-nums; }
+.review-box { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: #f3f4f6; border: 1px solid var(--border); }

@@ -13,7 +13,7 @@ import { Avatar, Spinner, Toasts } from './ui';
 import NotificationBell from './NotificationBell';
 import { FloatingBellButton, closePip } from './FloatingBell';
 import { go } from '../lib/nav';
-import CheckinButtons from './CheckinButtons';
+import AlertActions from './AlertActions';
 import TimezoneModal from './TimezoneModal';
 import Tour from './Tour';
 import { TimerBadge, TimerPrompt } from './Timer';
@@ -208,7 +208,7 @@ export default function AppShell({ page, children }: { page: string; children: R
               <strong>{alert.title}</strong>
               {alert.body && <span className="small muted"> — {alert.body}</span>}
             </span>
-            <CheckinButtons taskId={alert.task.id} status={alert.task.status} />
+            <AlertActions n={alert} />
             <a className="btn sm ghost" href={url(`/tarea/?id=${alert.task.id}`)}>Ver tarea</a>
             {alarmOn && (
               <div className="dropdown">

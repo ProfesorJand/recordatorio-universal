@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { TimeSelect } from '../DateTimeInput';
 import { useStore } from '@nanostores/react';
 import AppShell from '../AppShell';
 import TimezoneSelect from '../TimezoneSelect';
@@ -100,8 +101,8 @@ function ProfileContent() {
         {useHours && (
           <>
             <div className="row" style={{ marginTop: 8 }}>
-              <div><label>Desde</label><input type="time" value={start} onChange={(e) => setStart(e.target.value)} /></div>
-              <div><label>Hasta</label><input type="time" value={end} onChange={(e) => setEnd(e.target.value)} /></div>
+              <div><label>Desde</label><TimeSelect value={start} onChange={setStart} /></div>
+              <div><label>Hasta</label><TimeSelect value={end} onChange={setEnd} /></div>
             </div>
             <div style={{ marginTop: 10 }}>
               {DAYS.map((d, i) => (

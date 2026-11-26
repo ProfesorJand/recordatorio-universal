@@ -9,7 +9,7 @@ import { toastError } from '../../stores/app';
 import { url } from '../../lib/config';
 import { fmtDuration } from '../../lib/time';
 
-type Counts = { a_tiempo: number; tarde: number; en_progreso: number; pendiente: number; aplazada: number; bloqueada: number; vencida: number };
+type Counts = { a_tiempo: number; tarde: number; en_revision: number; en_progreso: number; pendiente: number; aplazada: number; bloqueada: number; vencida: number };
 interface Stats {
   scope: 'todos' | 'individual';
   users: { user: { id: number; name: string; picture: string | null }; counts: Counts; time: { normal: number; fuera: number; manual: number } }[];
@@ -21,6 +21,7 @@ interface Stats {
 const SERIES: Series[] = [
   { key: 'a_tiempo', label: 'Completadas a tiempo', color: '#008a17' },
   { key: 'tarde', label: 'Completadas tarde', color: '#ee7fac' },
+  { key: 'en_revision', label: 'En revisión', color: '#8a8d94' },
   { key: 'en_progreso', label: 'En progreso', color: '#257de0' },
   { key: 'pendiente', label: 'Pendientes', color: '#f2a600' },
   { key: 'aplazada', label: 'Aplazadas', color: '#6a4ce2' },

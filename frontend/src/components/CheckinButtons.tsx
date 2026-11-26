@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import DateTimeInput from './DateTimeInput';
 import { api } from '../lib/api';
 import { bumpRefresh, loadNotifications, toast, toastError } from '../stores/app';
 import { myTz } from '../stores/session';
@@ -28,6 +29,7 @@ export default function CheckinButtons({ taskId, status, onDone, size = 'sm' }: 
   }, [open]);
 
   if (status === 'completada') return null;
+  if (status === 'en_revision') return <span className="chip" title="Ya la entregaste; el supervisor la está revisando">🔍 En revisión</span>;
 
   async function send(response: string, until?: string, finalNote?: string) {
     setBusy(true);
@@ -90,7 +92,7 @@ export default function CheckinButtons({ taskId, status, onDone, size = 'sm' }: 
             <button onClick={() => send('aplazar', '1w')}>En 1 semana</button>
             <div style={{ padding: '0.5rem' }}>
               <label className="tiny">Elegir fecha (tu hora: {myTz()})</label>
-              <input type="datetime-local" value={custom} onChange={(e) => setCustom(e.target.value)} />
+              <DateTimeInput value={custom} onChange={setCustom} />
               <button className="btn sm primary" style={{ marginTop: 6, width: '100%' }} disabled={!custom} onClick={() => send('aplazar', custom)}>
                 Aplazar hasta esa fecha
               </button>

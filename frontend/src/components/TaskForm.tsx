@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import DateTimeInput from './DateTimeInput';
 import { useStore } from '@nanostores/react';
 import { api } from '../lib/api';
 import type { Person, Priority, Project, Task } from '../lib/types';
@@ -47,6 +48,7 @@ export default function TaskForm({ mode, task, parent, projectId, initial, onClo
   const [reminderStart, setReminderStart] = useState(task?.reminder_start_at ? toLocalInput(task.reminder_start_at, tz) : '');
   const [waTask, setWaTask] = useState<Task | null>(null);
   const [deps, setDeps] = useState<number[]>(task?.depends_on_ids ?? []);
+  const [requiresReview, setRequiresReview] = useState<boolean>(task ? task.requires_review : false);
   const [projectTasks, setProjectTasks] = useState<Task[]>([]);
   const [busy, setBusy] = useState(false);
   const [askNoSupervisor, setAskNoSupervisor] = useState(false);
@@ -110,6 +112,7 @@ export default function TaskForm({ mode, task, parent, projectId, initial, onClo
     if (mode !== 'linked') {
       body.supervisor_id = supervisor || null;
       body.depends_on = deps;
+      body.requires_review = supervisor ? requiresReview : false;
     }
     try {
       let r: { task: Task };
@@ -187,39 +190,53 @@ export default function TaskForm({ mode, task, parent, projectId, initial, onClo
           {mode !== 'linked' && (
             <div className="field">
               <label>Supervisor (recibe el aviso al terminar)</label>
-              <select value={supervisor} onChange={(e) => setSupervisor(e.target.value ? +e.target.value : '')}>
+              <select value={supervisor} onChange={(e) => {
+                const v = e.target.value ? +e.target.value : '';
+                // Por defecto, si hay supervisor, la entrega requiere su revisión
+                if (v && !supervisor) setRequiresReview(true);
+                if (!v) setRequiresReview(false);
+                setSupervisor(v);
+              }}>
                 <option value="">Sin supervisor</option>
                 {directory.map((u) => <option key={u.id} value={u.id}>{u.name}{u.id === me?.id ? ' (yo)' : ''}</option>)}
               </select>
+              {supervisor !== '' && (
+                <label className="check" style={{ marginTop: 6 }}>
+                  <input type="checkbox" checked={requiresReview} onChange={(e) => setRequiresReview(e.target.checked)} />
+                  🔍 Requiere revisión (el supervisor aprueba la entrega)
+                </label>
+              )}
             </div>
           )}
           <div className="field">
             <label>Fecha límite (opcional)</label>
-            <input type="datetime-local" value={due} onChange={(e) => setDue(e.target.value)} />
+            <DateTimeInput value={due} onChange={setDue} defaultTime="18:00" />
             <div className="hint">En tu hora: {tz} ({tzLabel(tz)}). Los demás la verán convertida a su hora.</div>
           </div>
           <div className="field">
-            <label>Recordatorio "¿cómo va?" (opcional)</label>
-            <select value={reminder ?? ''} onChange={(e) => setReminder(e.target.value ? +e.target.value : null)}>
-              {REMINDER_OPTIONS.map((o) => <option key={o.label} value={o.value ?? ''}>{o.label}</option>)}
-              {reminder !== null && !REMINDER_OPTIONS.some((o) => o.value === reminder) && <option value={reminder}>Cada {reminder} min</option>}
-            </select>
-            <div className="hint">Si tiene fecha límite, igual avisamos 24 h y 1 h antes.</div>
-          </div>
-          {reminder !== null && (
-            <div className="field">
-              <label>Empezar a recordar desde (opcional)</label>
-              <input type="datetime-local" value={reminderStart} onChange={(e) => setReminderStart(e.target.value)} max={due || undefined} />
-              {due && (
-                <div className="row" style={{ gap: 4, marginTop: 4 }}>
-                  {[1, 3, 7, 14].map((d) => (
-                    <button type="button" key={d} className="btn sm" onClick={() => setReminderStart(daysBefore(due, d))}>
-                      {d === 1 ? '1 día' : d === 7 ? '1 semana' : d === 14 ? '2 semanas' : `${d} días`} antes
-                    </button>
-                  ))}
-                </div>
+            <label>⏰ Empezar a recordar "¿cómo va?" desde (opcional)</label>
+            <DateTimeInput value={reminderStart} onChange={(v) => { setReminderStart(v); if (v && reminder === null) setReminder(1440); }} />
+            <div className="row" style={{ gap: 4, marginTop: 4 }}>
+              <button type="button" className="btn sm" onClick={() => { setReminderStart(toLocalInput(new Date().toISOString(), tz)); if (reminder === null) setReminder(1440); }}>Desde ahora</button>
+              {due && [1, 3, 7, 14].map((d) => (
+                <button type="button" key={d} className="btn sm" onClick={() => { setReminderStart(daysBefore(due, d)); if (reminder === null) setReminder(1440); }}>
+                  {d === 1 ? '1 día' : d === 7 ? '1 semana' : d === 14 ? '2 semanas' : `${d} días`} antes
+                </button>
+              ))}
+              {(reminderStart || reminder !== null) && (
+                <button type="button" className="btn sm ghost" onClick={() => { setReminderStart(''); setReminder(null); }}>Quitar recordatorio</button>
               )}
-              <div className="hint">Vacío = empieza ahora. Ej: entrega el 1 de enero, recordar cada día desde el 25 de diciembre.</div>
+            </div>
+            <div className="hint">Si tiene fecha límite, igual avisamos 24 h y 1 h antes aunque no pongas recordatorio.</div>
+          </div>
+          {(reminderStart || reminder !== null) && (
+            <div className="field">
+              <label>¿Cada cuánto recordar?</label>
+              <select value={reminder ?? ''} onChange={(e) => setReminder(e.target.value ? +e.target.value : null)}>
+                {REMINDER_OPTIONS.filter((o) => o.value !== null).map((o) => <option key={o.label} value={o.value ?? ''}>{o.label}</option>)}
+                {reminder !== null && !REMINDER_OPTIONS.some((o) => o.value === reminder) && <option value={reminder}>Cada {reminder} min</option>}
+              </select>
+              <div className="hint">Ej: entrega el 1 de enero, recordar cada día desde el 25 de diciembre.</div>
             </div>
           )}
         </div>

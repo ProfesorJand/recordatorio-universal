@@ -13,6 +13,7 @@ export const STATUS_LABEL: Record<Status, string> = {
   en_progreso: 'En progreso',
   aplazada: 'Aplazada',
   bloqueada: 'Esperando a otra tarea',
+  en_revision: 'En revisión',
   completada: 'Completada',
 };
 
@@ -21,6 +22,7 @@ export const STATUS_ICON: Record<Status, string> = {
   en_progreso: '◐',
   aplazada: '⏸',
   bloqueada: '⛓',
+  en_revision: '🔍',
   completada: '✓',
 };
 

@@ -49,7 +49,17 @@ export function isUrgentAlarm(n: AppNotification): boolean {
 
 /** Alertas para la barra: primero las urgentes, después el resto de "¿cómo va?" */
 export function alertList(list: AppNotification[]): AppNotification[] {
-  const actionable = list.filter((n) => n.actionable && n.task);
+  const review = (n: AppNotification) => (n.type === 'revision' || n.type === 'revision_pendiente') && !n.read && n.task?.status === 'en_revision';
+  // una sola alerta de revisión por tarea
+  const seen = new Set<number>();
+  const actionable = list.filter((n) => {
+    if (!n.task || !(n.actionable || review(n))) return false;
+    if (review(n)) {
+      if (seen.has(n.task.id)) return false;
+      seen.add(n.task.id);
+    }
+    return true;
+  });
   return [...actionable.filter(isUrgentAlarm), ...actionable.filter((n) => !isUrgentAlarm(n))];
 }
 

@@ -6,7 +6,7 @@ import { $notifications, $unread } from '../stores/app';
 import { $snoozeUntil, alertList, isUrgentAlarm, snooze, unsnooze } from '../stores/alarm';
 import { go } from '../lib/nav';
 import { relative } from '../lib/time';
-import CheckinButtons from './CheckinButtons';
+import AlertActions from './AlertActions';
 import { TimerBadge } from './Timer';
 import { $timer, confirmTimer } from '../stores/timer';
 
@@ -117,7 +117,7 @@ function PipPanel() {
           )}
           <div className="small" style={{ fontWeight: 600, cursor: 'pointer' }} onClick={() => openTask(alert.task!.id)}>{alert.title}</div>
           {alert.body && <div className="tiny muted" style={{ margin: '2px 0 6px' }}>{alert.body.slice(0, 140)}</div>}
-          <CheckinButtons taskId={alert.task.id} status={alert.task.status} />
+          <AlertActions n={alert} />
           {urgent && (
             <div className="row" style={{ gap: 4, marginTop: 6 }}>
               {snoozed ? (
