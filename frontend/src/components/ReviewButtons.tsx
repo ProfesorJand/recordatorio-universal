@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api } from '../lib/api';
 import { bumpRefresh, loadNotifications, toast, toastError } from '../stores/app';
 import { Modal } from './ui';
+import { useImagePaste } from './ImageUpload';
 
 /**
  * Botones del supervisor:
@@ -12,6 +13,7 @@ export default function ReviewButtons({ taskId, status, onDone }: { taskId: numb
   const [returning, setReturning] = useState(false);
   const [comment, setComment] = useState('');
   const [busy, setBusy] = useState(false);
+  const paste = useImagePaste((u, n) => setComment((x) => (x ? x + '\n' : '') + `![${n}](${u})`));
 
   async function send(action: 'aprobar' | 'devolver') {
     setBusy(true);
@@ -37,7 +39,8 @@ export default function ReviewButtons({ taskId, status, onDone }: { taskId: numb
       {returning && (
         <Modal title="↩ Devolver tarea" onClose={() => setReturning(false)}>
           <p className="small" style={{ marginTop: 0 }}>Explica qué hay que cambiar o completar. La tarea vuelve a "En progreso" y le avisamos a la persona.</p>
-          <textarea autoFocus value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Ej: falta el gráfico de diciembre y revisar los totales" />
+          <textarea autoFocus value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Ej: falta el gráfico de diciembre y revisar los totales (puedes pegar capturas con Ctrl+V)" {...paste.handlers} />
+          {paste.busy && <div className="tiny muted">Subiendo imagen…</div>}
           <div className="row" style={{ justifyContent: 'flex-end', marginTop: 8 }}>
             <button className="btn" onClick={() => setReturning(false)}>Cancelar</button>
             <button className="btn primary" disabled={busy || comment.trim().length < 3} onClick={() => send('devolver')}>Devolver</button>

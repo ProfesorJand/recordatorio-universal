@@ -27,6 +27,7 @@ export interface User {
   whatsapp_phone: string | null;
   tutorials_seen: string[];
   permissions: string[];
+  supervises?: number; // cuántas personas supervisa
 }
 
 export interface Task {

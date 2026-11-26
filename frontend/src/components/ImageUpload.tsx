@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useRef, useState, type ChangeEvent, type ClipboardEvent, type DragEvent } from 'react';
 import { uploadImage } from '../lib/api';
 import { toastError } from '../stores/app';
 
@@ -30,4 +30,63 @@ export default function ImageUpload({ onUploaded, label = '🖼 Subir imagen' }:
       </button>
     </>
   );
+}
+
+/**
+ * Pegar (Ctrl+V) o arrastrar una imagen dentro de un cuadro de texto.
+ * Uso: const paste = useImagePaste((url, name) => ...);  <textarea {...paste.handlers} />
+ */
+export function useImagePaste(onUploaded: (url: string, name: string) => void) {
+  const [busy, setBusy] = useState(false);
+
+  async function upload(files: File[]) {
+    if (!files.length) return;
+    setBusy(true);
+    try {
+      for (const f of files) {
+        // las capturas pegadas llegan como "image.png": les damos un nombre con fecha
+        const name = f.name && f.name !== 'image.png' ? f.name : `captura-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.png`;
+        const url = await uploadImage(new File([f], name, { type: f.type }));
+        onUploaded(url, name);
+      }
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const images = (list: FileList | DataTransferItemList | null | undefined): File[] => {
+    const out: File[] = [];
+    if (!list) return out;
+    for (let i = 0; i < list.length; i++) {
+      const it = list[i] as File | DataTransferItem;
+      const file = 'getAsFile' in it ? (it.kind === 'file' ? it.getAsFile() : null) : it;
+      if (file && file.type.startsWith('image/')) out.push(file);
+    }
+    return out;
+  };
+
+  return {
+    busy,
+    handlers: {
+      onPaste: (e: ClipboardEvent<HTMLTextAreaElement>) => {
+        const files = images(e.clipboardData?.items);
+        if (files.length) {
+          e.preventDefault(); // si hay imagen, no pegar texto raro
+          upload(files);
+        }
+      },
+      onDrop: (e: DragEvent<HTMLTextAreaElement>) => {
+        const files = images(e.dataTransfer?.files);
+        if (files.length) {
+          e.preventDefault();
+          upload(files);
+        }
+      },
+      onDragOver: (e: DragEvent<HTMLTextAreaElement>) => {
+        if (e.dataTransfer?.types?.includes('Files')) e.preventDefault();
+      },
+    },
+  };
 }

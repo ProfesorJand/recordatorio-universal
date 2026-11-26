@@ -9,7 +9,7 @@ import { $user, myTz } from '../stores/session';
 import { toLocalInput, tzLabel } from '../lib/time';
 import { Confirm, Modal } from './ui';
 import { waLink } from '../lib/whatsapp';
-import ImageUpload from './ImageUpload';
+import ImageUpload, { useImagePaste } from './ImageUpload';
 import DepsPicker from './DepsPicker';
 
 type Mode = 'create' | 'edit' | 'linked';
@@ -86,6 +86,8 @@ export default function TaskForm({ mode, task, parent, projectId, initial, onClo
     const start = el.selectionStart ?? description.length;
     setDescription(description.slice(0, start) + md + description.slice(start));
   }
+  const descPaste = useImagePaste(insertImage);
+
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -170,7 +172,8 @@ export default function TaskForm({ mode, task, parent, projectId, initial, onClo
             <ImageUpload onUploaded={insertImage} />
           </div>
           <textarea ref={descRef} value={description} onChange={(e) => setDescription(e.target.value)}
-            placeholder="Detalles, enlaces (https://...) o imágenes. Las imágenes subidas se insertan como ![nombre](url)" />
+            placeholder="Detalles, enlaces (https://...) o imágenes. Pega una captura con Ctrl+V o arrástrala aquí." {...descPaste.handlers} />
+          {descPaste.busy && <div className="tiny muted">Subiendo imagen…</div>}
         </div>
         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
           <div className="field">

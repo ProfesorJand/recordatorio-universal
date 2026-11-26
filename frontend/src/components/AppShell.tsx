@@ -22,10 +22,11 @@ import { $timer, loadTimer } from '../stores/timer';
 /** Para iniciar un tutorial desde cualquier parte (ej: página de Ayuda) */
 export const $tourRequest = atom<string | null>(null);
 
-const NAV: { key: string; href: string; label: string; perm?: string | string[] }[] = [
+const NAV: { key: string; href: string; label: string; perm?: string | string[]; show?: (u: User) => boolean }[] = [
   { key: 'tareas', href: '/tareas/', label: '✅ Tareas' },
   { key: 'calendario', href: '/calendario/', label: '📅 Calendario' },
   { key: 'proyectos', href: '/proyectos/', label: '📁 Proyectos' },
+  { key: 'equipo', href: '/equipo/', label: '🟢 Equipo', show: (u) => (u.supervises || 0) > 0 || u.permissions.includes('estadisticas.ver_todos') },
   { key: 'estadisticas', href: '/estadisticas/', label: '📊 Estadísticas', perm: ['estadisticas.ver_individual', 'estadisticas.ver_todos'] },
   { key: 'admin_usuarios', href: '/admin/usuarios/', label: '👥 Usuarios', perm: 'usuarios.gestionar' },
   { key: 'admin_roles', href: '/admin/roles/', label: '🔐 Roles', perm: 'roles.gestionar' },
@@ -159,7 +160,7 @@ export default function AppShell({ page, children }: { page: string; children: R
   const alert = alerts[idx];
   const alarmOn = !!alert && isUrgentAlarm(alert);
   const snoozed = snoozeUntil > Date.now();
-  const visibleNav = NAV.filter((n) => !n.perm || (Array.isArray(n.perm) ? n.perm.some(can) : can(n.perm)));
+  const visibleNav = NAV.filter((n) => (!n.show || n.show(user)) && (!n.perm || (Array.isArray(n.perm) ? n.perm.some(can) : can(n.perm))));
 
   return (
     <>

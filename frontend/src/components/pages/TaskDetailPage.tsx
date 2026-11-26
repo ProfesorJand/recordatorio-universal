@@ -7,7 +7,7 @@ import DepTree, { countChain, type DepNode } from '../DepTree';
 import TimeCard from '../TimeCard';
 import ReviewButtons from '../ReviewButtons';
 import RichText from '../RichText';
-import ImageUpload from '../ImageUpload';
+import ImageUpload, { useImagePaste } from '../ImageUpload';
 import CheckinButtons from '../CheckinButtons';
 import { Avatar, Confirm, DueDate, Empty, Loading, PriorityChip, StatusChip } from '../ui';
 import { api } from '../../lib/api';
@@ -64,6 +64,7 @@ function TaskDetailContent() {
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
   const commentRef = useRef<HTMLTextAreaElement>(null);
+  const commentPaste = useImagePaste((u, n) => setComment((c) => (c ? c + '\n' : '') + `![${n}](${u})`));
   const tz = myTz();
 
   const load = useCallback(() => {
@@ -239,7 +240,8 @@ function TaskDetailContent() {
             ))}
             {d.can.comment && (
               <form onSubmit={sendComment}>
-                <textarea ref={commentRef} value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Escribe un comentario (se avisa al supervisor)…" style={{ minHeight: 70 }} />
+                <textarea ref={commentRef} value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Escribe un comentario (se avisa al supervisor)… Puedes pegar imágenes con Ctrl+V" style={{ minHeight: 70 }} {...commentPaste.handlers} />
+                {commentPaste.busy && <div className="tiny muted">Subiendo imagen…</div>}
                 <div className="row between" style={{ marginTop: 6 }}>
                   <ImageUpload onUploaded={(u, n) => setComment((c) => (c ? c + '\n' : '') + `![${n}](${u})`)} />
                   <button className="btn primary sm" disabled={sending || !comment.trim()}>Comentar</button>

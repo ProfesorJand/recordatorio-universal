@@ -6,7 +6,7 @@ import { myTz } from '../stores/session';
 import type { Status } from '../lib/types';
 import { Modal } from './ui';
 import { setTimer, type TimerState } from '../stores/timer';
-import ImageUpload from './ImageUpload';
+import ImageUpload, { useImagePaste } from './ImageUpload';
 
 /**
  * Respuesta al "¿cómo va?": Empezar / Ya lo hice / Sigo en eso / Aplazar.
@@ -20,6 +20,7 @@ export default function CheckinButtons({ taskId, status, onDone, size = 'sm' }: 
   const ref = useRef<HTMLDivElement>(null);
   const [finishing, setFinishing] = useState(false);
   const [note, setNote] = useState('');
+  const notePaste = useImagePaste((u, n) => setNote((x) => (x ? x + '\n' : '') + `![${n}](${u})`));
 
   useEffect(() => {
     if (!open) return;
@@ -68,7 +69,8 @@ export default function CheckinButtons({ taskId, status, onDone, size = 'sm' }: 
           <p className="small" style={{ marginTop: 0 }}>
             <strong>¿Dónde dejaste el trabajo terminado?</strong> Escribe el enlace, la carpeta o un detalle para que el supervisor lo pueda revisar.
           </p>
-          <textarea autoFocus value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ej: Subí el informe a Drive: https://drive.google.com/… / Quedó en la carpeta Ventas > Diciembre" />
+          <textarea autoFocus value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ej: Subí el informe a Drive: https://drive.google.com/… (puedes pegar capturas con Ctrl+V)" {...notePaste.handlers} />
+          {notePaste.busy && <div className="tiny muted">Subiendo imagen…</div>}
           <div className="row between" style={{ marginTop: 8 }}>
             <ImageUpload label="🖼 Adjuntar captura" onUploaded={(u, n) => setNote((x) => (x ? x + '\n' : '') + `![${n}](${u})`)} />
             <div className="row">
