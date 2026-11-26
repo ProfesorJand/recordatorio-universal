@@ -3,10 +3,12 @@ import { atom } from 'nanostores';
 import { useStore } from '@nanostores/react';
 import { createRoot, type Root } from 'react-dom/client';
 import { $notifications, $unread } from '../stores/app';
-import { $snoozeUntil, isUrgentAlarm, snooze, unsnooze } from '../stores/alarm';
+import { $snoozeUntil, alertList, isUrgentAlarm, snooze, unsnooze } from '../stores/alarm';
 import { go } from '../lib/nav';
 import { relative } from '../lib/time';
 import CheckinButtons from './CheckinButtons';
+import { TimerBadge } from './Timer';
+import { $timer, confirmTimer } from '../stores/timer';
 
 /**
  * Ventana flotante con "Document Picture-in-Picture" (Chrome/Edge de escritorio).
@@ -73,7 +75,11 @@ function PipPanel() {
   const list = useStore($notifications);
   const unread = useStore($unread);
   const snoozeUntil = useStore($snoozeUntil);
-  const alert = list.find(isUrgentAlarm) || list.find((n) => n.actionable && n.task);
+  const [i, setI] = useState(0);
+  const timer = useStore($timer);
+  const alerts = alertList(list);
+  const idx = Math.min(i, Math.max(0, alerts.length - 1));
+  const alert = alerts[idx];
   const urgent = !!alert && isUrgentAlarm(alert);
   const snoozed = snoozeUntil > Date.now();
   const others = list.filter((n) => !n.read && n.id !== alert?.id).slice(0, 3);
@@ -87,11 +93,28 @@ function PipPanel() {
     <div style={{ padding: '0.6rem 0.75rem', minHeight: '100vh', background: urgent ? '#fdecec' : 'var(--bg)', fontSize: 14 }}>
       <div className="row between" style={{ marginBottom: 6 }}>
         <strong>🔔 {unread} {unread === 1 ? 'aviso' : 'avisos'}</strong>
+        <TimerBadge compact />
         <button className="btn sm ghost" onClick={() => { window.focus(); go('/tareas/'); }}>Abrir app</button>
       </div>
+      {timer.running && timer.prompt && (
+        <div className="card" style={{ padding: '0.5rem', marginBottom: 6, background: '#fff8e6' }}>
+          <div className="small"><strong>{timer.prompt.kind === 'horario' ? '🌙 Terminó tu horario.' : '⏱ Llevas 2 h.'}</strong> ¿Sigues con "{timer.task?.title}"?</div>
+          <div className="row" style={{ gap: 4, marginTop: 4 }}>
+            <button className="btn sm primary" onClick={() => confirmTimer(true)}>Sí, sigo</button>
+            <button className="btn sm" onClick={() => confirmTimer(false)}>No, pausar</button>
+          </div>
+        </div>
+      )}
 
       {alert && alert.task ? (
         <div className="card" style={{ padding: '0.6rem' }}>
+          {alerts.length > 1 && (
+            <div className="row" style={{ gap: 2, marginBottom: 4 }}>
+              <button className="btn sm ghost" disabled={idx === 0} onClick={() => setI(idx - 1)}>‹</button>
+              <span className="tiny">{idx + 1}/{alerts.length}</span>
+              <button className="btn sm ghost" disabled={idx >= alerts.length - 1} onClick={() => setI(idx + 1)}>›</button>
+            </div>
+          )}
           <div className="small" style={{ fontWeight: 600, cursor: 'pointer' }} onClick={() => openTask(alert.task!.id)}>{alert.title}</div>
           {alert.body && <div className="tiny muted" style={{ margin: '2px 0 6px' }}>{alert.body.slice(0, 140)}</div>}
           <CheckinButtons taskId={alert.task.id} status={alert.task.status} />

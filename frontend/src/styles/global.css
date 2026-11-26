@@ -183,3 +183,18 @@ th { color: var(--text-2); font-weight: 600; font-size: 0.8rem; }
 @keyframes pulse-bg { 50% { background: #fbd9d9; } }
 @media (prefers-reduced-motion: reduce) { .alert-bar.urgent { animation: none; } }
 .cal-g { background-image: repeating-linear-gradient(135deg, transparent 0 4px, rgba(0,0,0,0.035) 4px 8px); }
+
+/* ---------- cadena de dependencias */
+.dep-tree { list-style: none; padding: 0; margin: 0.25rem 0; position: relative; }
+.dep-tree .dep-tree { border-left: 2px dashed var(--border); padding-left: 10px; }
+.dep-node { display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.4rem 0.5rem; border-radius: 8px; }
+.dep-tree li.blocked > .dep-node { background: #f6f4fe; }
+.dep-tree li.done > .dep-node { opacity: 0.6; }
+.dep-icon { width: 22px; text-align: center; flex-shrink: 0; }
+.progress { height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
+.progress > span { display: block; height: 100%; background: var(--ok); }
+
+/* ---------- cronómetro */
+.timer-badge { display: inline-flex; align-items: center; background: #e8f1fc; border-radius: 999px; padding: 0 2px; white-space: nowrap; }
+.timer-title { display: inline-block; max-width: 160px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+@media (max-width: 760px) { .timer-title { display: none; } }

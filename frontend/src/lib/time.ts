@@ -102,3 +102,20 @@ export function relative(iso: string | null | undefined, now = Date.now()): stri
 export function shortTz(tz: string): string {
   return tz.split('/').pop()!.replace(/_/g, ' ');
 }
+
+/** 7530 -> "2 h 05 min", 300 -> "5 min" */
+export function fmtDuration(seconds: number): string {
+  const s = Math.max(0, Math.round(seconds));
+  if (s < 60) return s === 0 ? '0 min' : '< 1 min';
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h ? `${h} h ${String(m).padStart(2, '0')} min` : `${m} min`;
+}
+
+/** 7530 -> "2:05:30" (para el cronómetro) */
+export function fmtClock(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return `${h}:${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}

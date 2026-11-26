@@ -24,6 +24,9 @@ export const STATUS_ICON: Record<Status, string> = {
   completada: '✓',
 };
 
+/** Prioridad efectiva (la que calcula el servidor según la fecha límite) */
+export const eff = (t: Pick<Task, 'priority'> & { effective_priority?: Priority }): Priority => t.effective_priority || t.priority;
+
 export function priorityInfo(p: Priority) {
   return PRIORITIES.find((x) => x.value === p) || PRIORITIES[3];
 }
@@ -53,9 +56,9 @@ export function rank(t: Task, now = Date.now()): number[] {
   const tierOrder: Record<Priority, number> = { urgente: 0, S: 1, A: 2, B: 3, C: 4 };
   let group: number;
   if (isOverdue(t, now)) group = 0;
-  else if (t.priority === 'urgente') group = 1;
+  else if (eff(t) === 'urgente') group = 1;
   else if (isDueSoon(t, now)) group = 2;
-  else group = 3 + tierOrder[t.priority];
+  else group = 3 + tierOrder[eff(t)];
   const due = t.due_at ? new Date(t.due_at).getTime() : Number.MAX_SAFE_INTEGER;
   return [group, due, new Date(t.created_at).getTime()];
 }

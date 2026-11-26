@@ -181,7 +181,7 @@ function CalendarContent() {
                   <span className="cal-day">{c.day}</span>
                   {shownTasks.map((t) => (
                     <span key={t.id} className={`cal-task ${t.status === 'completada' ? 'done' : ''} ${isOverdue(t) ? 'late' : ''}`}
-                      style={{ borderLeftColor: priorityInfo(t.priority).color }} title={t.title}>
+                      style={{ borderLeftColor: priorityInfo(t.effective_priority || t.priority).color }} title={t.title}>
                       {t.title}
                     </span>
                   ))}
@@ -211,7 +211,7 @@ function CalendarContent() {
                     <div style={{ flex: 1 }}>
                       <div className="small"><strong>{t.status === 'completada' ? '✓ ' : ''}{t.title}</strong></div>
                       <div className="tiny muted">
-                        {toLocalInput(t.due_at!, tz).slice(11)} · {priorityInfo(t.priority).label} · {t.assignee?.name || 'Sin asignar'} · {t.project.name}
+                        {toLocalInput(t.due_at!, tz).slice(11)} · {priorityInfo(t.effective_priority || t.priority).label} · {t.assignee?.name || 'Sin asignar'} · {t.project.name}
                         {isOverdue(t) && <strong style={{ color: '#b22a2b' }}> · vencida</strong>}
                       </div>
                     </div>

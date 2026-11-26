@@ -47,6 +47,12 @@ export function isUrgentAlarm(n: AppNotification): boolean {
   return n.task.priority === 'urgente' || n.type === 'vencida' || n.type === 'vence_1h';
 }
 
+/** Alertas para la barra: primero las urgentes, después el resto de "¿cómo va?" */
+export function alertList(list: AppNotification[]): AppNotification[] {
+  const actionable = list.filter((n) => n.actionable && n.task);
+  return [...actionable.filter(isUrgentAlarm), ...actionable.filter((n) => !isUrgentAlarm(n))];
+}
+
 /** Se llama cada pocos segundos desde AppShell. */
 export function alarmTick(list: AppNotification[]) {
   if (!list.some(isUrgentAlarm)) return;

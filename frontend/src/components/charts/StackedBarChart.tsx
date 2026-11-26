@@ -73,7 +73,7 @@ export default function StackedBarChart({ rows, series }: { rows: BarRow[]; seri
       // Total al final
       ctx.fillStyle = '#191919';
       ctx.textAlign = 'left';
-      ctx.fillText(String(total), x + 6, yMid);
+      ctx.fillText(Number.isInteger(total) ? String(total) : total.toFixed(1), x + 6, yMid);
     });
   }, [rows, series, max]);
 

@@ -36,6 +36,7 @@ export interface Task {
   title: string;
   description: string | null;
   priority: Priority;
+  effective_priority: Priority; // sube sola a medida que se acerca la fecha límite
   status: Status;
   assignee: Person | null;
   supervisor: Person | null;
@@ -54,7 +55,9 @@ export interface Task {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
-  children_open: number;
+  children_open: number; // tareas de las que depende que siguen sin terminar
+  depends_on_ids: number[];
+  worked_seconds: number; // tiempo trabajado (cronómetro + ajustes) // tareas que deben terminarse antes
 }
 
 export interface Project {

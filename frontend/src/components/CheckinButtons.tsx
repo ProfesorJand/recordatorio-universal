@@ -3,6 +3,9 @@ import { api } from '../lib/api';
 import { bumpRefresh, loadNotifications, toast, toastError } from '../stores/app';
 import { myTz } from '../stores/session';
 import type { Status } from '../lib/types';
+import { Modal } from './ui';
+import { setTimer, type TimerState } from '../stores/timer';
+import ImageUpload from './ImageUpload';
 
 /**
  * Respuesta al "¿cómo va?": Empezar / Ya lo hice / Sigo en eso / Aplazar.
@@ -14,6 +17,8 @@ export default function CheckinButtons({ taskId, status, onDone, size = 'sm' }: 
   const [custom, setCustom] = useState('');
   const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const [finishing, setFinishing] = useState(false);
+  const [note, setNote] = useState('');
 
   useEffect(() => {
     if (!open) return;
@@ -24,16 +29,20 @@ export default function CheckinButtons({ taskId, status, onDone, size = 'sm' }: 
 
   if (status === 'completada') return null;
 
-  async function send(response: string, until?: string) {
+  async function send(response: string, until?: string, finalNote?: string) {
     setBusy(true);
     try {
-      await api(`/tasks/${taskId}/checkin`, { method: 'POST', body: { response, until } });
+      const r = await api<{ timer?: TimerState; paused?: { title: string } | null }>(`/tasks/${taskId}/checkin`, { method: 'POST', body: { response, until, note: finalNote } });
+      if (r.timer) setTimer(r.timer);
+      if (r.paused) toast(`⏱ Pausamos el cronómetro de "${r.paused.title}" y empezamos a contar esta`);
       toast(
         response === 'hecho' ? '✅ ¡Tarea completada!' :
         response === 'aplazar' ? '⏰ Te lo recordaremos más tarde' :
         response === 'empezar' ? '▶ ¡A darle!' : '🔄 Perfecto, seguimos',
       );
       setOpen(false);
+      setFinishing(false);
+      setNote('');
       bumpRefresh();
       loadNotifications();
       onDone?.();
@@ -47,10 +56,26 @@ export default function CheckinButtons({ taskId, status, onDone, size = 'sm' }: 
   const cls = `btn ${size === 'sm' ? 'sm' : ''}`;
   return (
     <div className="row" style={{ gap: '0.35rem' }} data-tour="checkin">
+      {status === 'bloqueada' && <span className="chip" title="Primero deben terminarse las tareas de las que depende">🔒 Esperando otras tareas</span>}
       {status === 'pendiente' && (
         <button className={cls} disabled={busy} onClick={() => send('empezar')}>▶ Empezar</button>
       )}
-      <button className={`${cls} ok`} disabled={busy} onClick={() => send('hecho')}>✅ Ya lo hice</button>
+      {status !== 'bloqueada' && <button className={`${cls} ok`} disabled={busy} onClick={() => setFinishing(true)}>✅ Ya lo hice</button>}
+      {finishing && (
+        <Modal title="✅ Entregar tarea" onClose={() => setFinishing(false)}>
+          <p className="small" style={{ marginTop: 0 }}>
+            <strong>¿Dónde dejaste el trabajo terminado?</strong> Escribe el enlace, la carpeta o un detalle para que el supervisor lo pueda revisar.
+          </p>
+          <textarea autoFocus value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ej: Subí el informe a Drive: https://drive.google.com/… / Quedó en la carpeta Ventas > Diciembre" />
+          <div className="row between" style={{ marginTop: 8 }}>
+            <ImageUpload label="🖼 Adjuntar captura" onUploaded={(u, n) => setNote((x) => (x ? x + '\n' : '') + `![${n}](${u})`)} />
+            <div className="row">
+              <button className="btn" onClick={() => setFinishing(false)}>Cancelar</button>
+              <button className="btn ok" disabled={busy || note.trim().length < 3} onClick={() => send('hecho', undefined, note)}>Marcar como hecha</button>
+            </div>
+          </div>
+        </Modal>
+      )}
       {status !== 'pendiente' && status !== 'bloqueada' && (
         <button className={cls} disabled={busy} onClick={() => send('sigo')}>🔄 Sigo en eso</button>
       )}

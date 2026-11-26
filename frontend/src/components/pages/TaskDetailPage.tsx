@@ -3,6 +3,8 @@ import { useStore } from '@nanostores/react';
 import AppShell from '../AppShell';
 import TaskForm from '../TaskForm';
 import TaskCard from '../TaskCard';
+import DepTree, { countChain, type DepNode } from '../DepTree';
+import TimeCard from '../TimeCard';
 import RichText from '../RichText';
 import ImageUpload from '../ImageUpload';
 import CheckinButtons from '../CheckinButtons';
@@ -21,6 +23,8 @@ interface Detail {
   task: Task;
   parent: Task | null;
   children: Task[];
+  chain: DepNode[];
+  blocking: Task[];
   comments: { id: number; body: string; created_at: string; user: { id: number; name: string; picture: string | null } }[];
   activity: { action: string; detail: string | null; created_at: string; user: string }[];
   can: { edit: boolean; checkin: boolean; link: boolean; comment: boolean; delete: boolean };
@@ -29,7 +33,7 @@ interface Detail {
 const ACTION_LABEL: Record<string, string> = {
   creada: 'creó la tarea', creada_vinculada: 'pidió esta tarea', editada: 'editó', completada: 'la completó',
   aplazada: 'la aplazó', sigue: 'dijo que sigue en eso', empezada: 'la empezó', comentario: 'comentó',
-  bloqueada: 'quedó esperando', fecha_cambiada: 'cambió la fecha límite', desbloqueada: 'se desbloqueó', aviso: 'aviso',
+  bloqueada: 'quedó esperando', tiempo_ajustado: 'ajustó el tiempo', fecha_cambiada: 'cambió la fecha límite', desbloqueada: 'se desbloqueó', aviso: 'aviso',
 };
 
 function PersonRow({ label, p }: { label: string; p: Person | null }) {
@@ -120,7 +124,7 @@ function TaskDetailContent() {
         <div className="row between" style={{ alignItems: 'flex-start' }}>
           <div style={{ flex: 1, minWidth: 240 }}>
             <div className="row" style={{ marginBottom: 6 }}>
-              <PriorityChip p={t.priority} />
+              <PriorityChip p={t.effective_priority || t.priority} original={t.priority} />
               <StatusChip s={t.status} />
               <a className="chip" href={url(`/proyecto/?id=${t.project.id}`)}>
                 <span className="dot" style={{ background: t.project.color }} /> {t.project.name}
@@ -178,11 +182,38 @@ function TaskDetailContent() {
 
           <div className="card" data-tour="linked">
             <div className="row between">
-              <h3 style={{ margin: 0 }}>⛓ Tareas vinculadas ({d.children.length})</h3>
-              {d.can.link && <button className="btn sm primary" onClick={() => setLinking(true)}>+ Pedir a otra persona</button>}
+              <h3 style={{ margin: 0 }}>⛓ Cadena de tareas</h3>
+              <div className="row" style={{ gap: 6 }}>
+                {d.can.edit && <button className="btn sm" onClick={() => setEditing(true)}>🔗 Vincular tareas</button>}
+                {d.can.link && <button className="btn sm primary" onClick={() => setLinking(true)}>+ Pedir a otra persona</button>}
+              </div>
             </div>
-            <p className="tiny muted">Si necesitas que alguien termine algo antes, pídeselo aquí. Te avisaremos cuando esté listo.</p>
-            <div className="grid">{d.children.map((c) => <TaskCard key={c.id} task={c} showProject={false} />)}</div>
+            {d.chain.length === 0 ? (
+              <p className="tiny muted">Esta tarea no depende de ninguna otra. Si para terminarla hace falta que antes se complete otra, vincúlala o pídesela a alguien.</p>
+            ) : (
+              <>
+                {(() => {
+                  const c = countChain(d.chain);
+                  return (
+                    <div style={{ margin: '0.6rem 0' }}>
+                      <div className="small" style={{ marginBottom: 4 }}>
+                        {c.done === c.total
+                          ? '✅ Todo lo necesario ya está terminado.'
+                          : <>🔒 Para hacer esta tarea, antes deben terminarse estas tareas: <strong>{c.done} de {c.total}</strong> listas.</>}
+                      </div>
+                      <div className="progress"><span style={{ width: `${(c.done / c.total) * 100}%` }} /></div>
+                    </div>
+                  );
+                })()}
+                <DepTree nodes={d.chain} />
+              </>
+            )}
+            {d.blocking.length > 0 && (
+              <>
+                <div className="small" style={{ marginTop: '0.8rem', fontWeight: 600 }}>🔓 Cuando termines esta, se desbloquean:</div>
+                <div className="grid" style={{ marginTop: 6 }}>{d.blocking.map((c) => <TaskCard key={c.id} task={c} />)}</div>
+              </>
+            )}
           </div>
 
           <div className="card" data-tour="comments">
@@ -210,6 +241,7 @@ function TaskDetailContent() {
         </div>
 
         <div className="stack">
+          <TimeCard task={t} />
           <div className="card" data-tour="people">
             <PersonRow label="Asignada a" p={t.assignee} />
             <PersonRow label="Supervisor (recibe el aviso al terminar)" p={t.supervisor} />

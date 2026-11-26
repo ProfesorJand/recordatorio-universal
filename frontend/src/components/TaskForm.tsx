@@ -9,6 +9,7 @@ import { toLocalInput, tzLabel } from '../lib/time';
 import { Confirm, Modal } from './ui';
 import { waLink } from '../lib/whatsapp';
 import ImageUpload from './ImageUpload';
+import DepsPicker from './DepsPicker';
 
 type Mode = 'create' | 'edit' | 'linked';
 
@@ -45,16 +46,30 @@ export default function TaskForm({ mode, task, parent, projectId, initial, onClo
   const [reminder, setReminder] = useState<number | null>(task?.reminder_every_minutes ?? null);
   const [reminderStart, setReminderStart] = useState(task?.reminder_start_at ? toLocalInput(task.reminder_start_at, tz) : '');
   const [waTask, setWaTask] = useState<Task | null>(null);
+  const [deps, setDeps] = useState<number[]>(task?.depends_on_ids ?? []);
+  const [projectTasks, setProjectTasks] = useState<Task[]>([]);
   const [busy, setBusy] = useState(false);
   const [askNoSupervisor, setAskNoSupervisor] = useState(false);
   const descRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     loadDirectory().catch(() => {});
-    if (mode === 'create') {
+    if (mode !== 'linked') {
       api<{ projects: Project[] }>('/projects').then((r) => setProjects(r.projects)).catch(toastError);
     }
   }, [mode]);
+
+  // Tareas del proyecto, para elegir de cuáles depende
+  useEffect(() => {
+    if (!projId || mode === 'linked') return setProjectTasks([]);
+    api<{ tasks: Task[] }>(`/tasks?scope=all&project_id=${projId}&include_completed=1`).then((r) => setProjectTasks(r.tasks)).catch(() => {});
+  }, [projId, mode]);
+
+  // Si se cambia de proyecto y la persona asignada no es miembro, se deja sin asignar
+  useEffect(() => {
+    if (assignee && members.length && !members.some((m) => m.id === assignee)) setAssignee('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [members]);
 
   // Miembros del proyecto (solo ellos pueden ser asignados)
   useEffect(() => {
@@ -92,12 +107,15 @@ export default function TaskForm({ mode, task, parent, projectId, initial, onClo
       reminder_every_minutes: reminder,
       reminder_start_local: reminder ? reminderStart || null : null,
     };
-    if (mode !== 'linked') body.supervisor_id = supervisor || null;
+    if (mode !== 'linked') {
+      body.supervisor_id = supervisor || null;
+      body.depends_on = deps;
+    }
     try {
       let r: { task: Task };
       if (mode === 'create') r = await api('/tasks', { method: 'POST', body: { ...body, project_id: projId } });
       else if (mode === 'linked') r = await api(`/tasks/${parent!.id}/linked`, { method: 'POST', body });
-      else r = await api(`/tasks/${task!.id}`, { method: 'PATCH', body });
+      else r = await api(`/tasks/${task!.id}`, { method: 'PATCH', body: { ...body, project_id: projId } });
       toast(mode === 'edit' ? 'Tarea actualizada' : mode === 'linked' ? 'Tarea pedida. Te avisaremos cuando la terminen.' : 'Tarea creada');
       bumpRefresh();
       onSaved?.(r.task);
@@ -127,13 +145,16 @@ export default function TaskForm({ mode, task, parent, projectId, initial, onClo
         </p>
       )}
       <form onSubmit={submit}>
-        {mode === 'create' && (
+        {mode !== 'linked' && (
           <div className="field">
             <label>Proyecto</label>
-            <select required value={projId} onChange={(e) => { setProjId(e.target.value ? +e.target.value : ''); setAssignee(''); }}>
+            <select required value={projId} onChange={(e) => { setProjId(e.target.value ? +e.target.value : ''); }}>
               <option value="">Elige un proyecto…</option>
               {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
+            {mode === 'edit' && task && projId !== task.project.id && (
+              <div className="hint">La tarea se moverá a este proyecto. Si la persona asignada no es miembro, elige a otra.</div>
+            )}
           </div>
         )}
         <div className="field">
@@ -202,6 +223,9 @@ export default function TaskForm({ mode, task, parent, projectId, initial, onClo
             </div>
           )}
         </div>
+        {mode !== 'linked' && projId !== '' && (
+          <DepsPicker tasks={projectTasks} value={deps} onChange={setDeps} excludeId={task?.id} />
+        )}
         <div className="row" style={{ justifyContent: 'flex-end', marginTop: '0.5rem' }}>
           <button type="button" className="btn" onClick={onClose}>Cancelar</button>
           <button className="btn primary" disabled={busy}>{busy ? 'Guardando…' : mode === 'edit' ? 'Guardar cambios' : mode === 'linked' ? 'Pedir tarea' : 'Crear tarea'}</button>

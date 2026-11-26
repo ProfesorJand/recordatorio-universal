@@ -20,7 +20,8 @@ export const TOURS: Record<string, TourStep[]> = {
     { target: 'task-head', title: 'La tarea', text: 'Aquí ves la prioridad, el estado y la fecha límite en tu hora (y en la hora de quien la fijó, si está en otro país).' },
     { target: 'checkin', demo: 'checkin', title: 'Responde aquí', text: 'Marca si ya la hiciste, si sigues o aplázala para que te lo recuerde después.' },
     { target: 'people', title: 'Personas', text: 'Quién la tiene asignada, quién la supervisa (recibe el aviso al terminar) y quién la creó.' },
-    { target: 'linked', title: '¿Necesitas a alguien más?', text: 'Si para terminar necesitas que otra persona haga algo, pídele una tarea vinculada. Tu tarea queda "esperando" y te avisamos cuando la terminen.' },
+    { target: 'linked', title: 'Cadena de tareas', text: 'Aquí ves qué tareas deben terminarse antes que esta (y las que a su vez esas necesitan), y cuáles se desbloquean cuando termines. Puedes vincular tareas existentes o pedirle una nueva a otra persona.' },
+    { target: 'time', title: 'Tiempo trabajado', text: 'Al tocar Empezar o Sigo en eso, el cronómetro empieza a contar (uno solo a la vez). Se pausa al aplazar, al terminar o si cierras la app. Al terminar tu horario y cada 2 horas te pregunta si sigues: tienes 30 minutos para responder.' },
     { target: 'comments', title: 'Comentarios', text: 'Deja comentarios con enlaces o imágenes. Le avisamos al supervisor y a la persona asignada.' },
   ],
   calendario: [

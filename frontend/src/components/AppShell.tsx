@@ -7,7 +7,7 @@ import type { User } from '../lib/types';
 import { TOURS } from '../lib/tours';
 import { $session, $user, can, clearSession, setUser } from '../stores/session';
 import { $notifications, $unread, loadNotifications } from '../stores/app';
-import { $snoozeUntil, alarmTick, isUrgentAlarm, snooze, unsnooze } from '../stores/alarm';
+import { $snoozeUntil, alarmTick, alertList, isUrgentAlarm, snooze, unsnooze } from '../stores/alarm';
 import { unlockAudio } from '../lib/sound';
 import { Avatar, Spinner, Toasts } from './ui';
 import NotificationBell from './NotificationBell';
@@ -16,6 +16,8 @@ import { go } from '../lib/nav';
 import CheckinButtons from './CheckinButtons';
 import TimezoneModal from './TimezoneModal';
 import Tour from './Tour';
+import { TimerBadge, TimerPrompt } from './Timer';
+import { $timer, loadTimer } from '../stores/timer';
 
 /** Para iniciar un tutorial desde cualquier parte (ej: página de Ayuda) */
 export const $tourRequest = atom<string | null>(null);
@@ -38,6 +40,7 @@ export default function AppShell({ page, children }: { page: string; children: R
   const tourReq = useStore($tourRequest);
   const snoozeUntil = useStore($snoozeUntil);
   const [snoozeMenu, setSnoozeMenu] = useState(false);
+  const [alertIdx, setAlertIdx] = useState(0);
   const [ready, setReady] = useState(false);
   const [menu, setMenu] = useState(false);
   const [tour, setTour] = useState<string | null>(null);
@@ -64,8 +67,16 @@ export default function AppShell({ page, children }: { page: string; children: R
   useEffect(() => {
     if (!ready) return;
     loadNotifications();
-    const id = setInterval(loadNotifications, 60_000);
-    const onFocus = () => loadNotifications();
+    loadTimer();
+    const id = setInterval(() => {
+      loadNotifications();
+      // Mientras el cronómetro corre, avisamos al servidor que la app sigue abierta
+      if ($timer.get().running) loadTimer(true);
+    }, 60_000);
+    const onFocus = () => {
+      loadNotifications();
+      loadTimer($timer.get().running);
+    };
     window.addEventListener('focus', onFocus);
     return () => {
       clearInterval(id);
@@ -143,7 +154,9 @@ export default function AppShell({ page, children }: { page: string; children: R
     );
   }
 
-  const alert = notifications.find(isUrgentAlarm) || notifications.find((n) => n.actionable && n.task);
+  const alerts = alertList(notifications);
+  const idx = Math.min(alertIdx, Math.max(0, alerts.length - 1));
+  const alert = alerts[idx];
   const alarmOn = !!alert && isUrgentAlarm(alert);
   const snoozed = snoozeUntil > Date.now();
   const visibleNav = NAV.filter((n) => !n.perm || (Array.isArray(n.perm) ? n.perm.some(can) : can(n.perm)));
@@ -162,6 +175,7 @@ export default function AppShell({ page, children }: { page: string; children: R
           ))}
         </nav>
         <FloatingBellButton />
+        <TimerBadge />
         <NotificationBell />
         <div className="dropdown" ref={menuRef}>
           <button className="btn ghost" style={{ padding: 4 }} onClick={() => setMenu(!menu)} aria-label="Mi cuenta" data-tour="profile-link">
@@ -183,6 +197,13 @@ export default function AppShell({ page, children }: { page: string; children: R
       {alert && alert.task && (
         <div className={`alert-bar ${alarmOn ? 'urgent' : ''}`} role="alert">
           <div className="inner">
+            {alerts.length > 1 && (
+              <span className="row" style={{ gap: 2, flexWrap: 'nowrap' }} aria-label="Cambiar de alerta">
+                <button className="btn sm ghost" disabled={idx === 0} onClick={() => setAlertIdx(idx - 1)} aria-label="Alerta anterior">‹</button>
+                <span className="tiny" style={{ whiteSpace: 'nowrap' }}>{idx + 1}/{alerts.length}</span>
+                <button className="btn sm ghost" disabled={idx >= alerts.length - 1} onClick={() => setAlertIdx(idx + 1)} aria-label="Alerta siguiente">›</button>
+              </span>
+            )}
             <span style={{ flex: 1, minWidth: 200 }}>
               <strong>{alert.title}</strong>
               {alert.body && <span className="small muted"> — {alert.body}</span>}
@@ -212,6 +233,7 @@ export default function AppShell({ page, children }: { page: string; children: R
 
       {!user.timezone && <TimezoneModal />}
       {tour && TOURS[tour] && <Tour steps={TOURS[tour]} onFinish={finishTour} />}
+      <TimerPrompt />
       <Toasts />
     </>
   );

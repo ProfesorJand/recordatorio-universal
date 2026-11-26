@@ -65,9 +65,16 @@ export function Avatar({ person, size = 26 }: { person: AvatarPerson | null | un
   );
 }
 
-export function PriorityChip({ p }: { p: Priority }) {
+/** Chip de prioridad. Si la prioridad subió por la cercanía de la fecha límite, lo indica con ⬆ */
+export function PriorityChip({ p, original }: { p: Priority; original?: Priority }) {
   const info = priorityInfo(p);
-  return <span className="chip solid" style={{ background: info.color }}>{p === 'urgente' ? '🔥 ' : ''}{info.label}</span>;
+  const raised = !!original && original !== p;
+  return (
+    <span className="chip solid" style={{ background: info.color }}
+      title={raised ? `Era ${priorityInfo(original!).label}; subió porque se acerca la fecha límite` : undefined}>
+      {p === 'urgente' ? '🔥 ' : ''}{info.label}{raised ? ' ⬆' : ''}
+    </span>
+  );
 }
 
 export function StatusChip({ s }: { s: Status }) {
