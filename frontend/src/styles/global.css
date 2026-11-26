@@ -179,3 +179,6 @@ th { color: var(--text-2); font-weight: 600; font-size: 0.8rem; }
   .cal-task { font-size: 0; height: 6px; padding: 0; border-left-width: 0; background: currentColor; }
   .cal-task:not(.late) { color: var(--primary); }
 }
+.alert-bar.urgent { background: #fdecec; border-bottom-color: #f5c2c2; animation: pulse-bg 1.6s ease-in-out infinite; }
+@keyframes pulse-bg { 50% { background: #fbd9d9; } }
+@media (prefers-reduced-motion: reduce) { .alert-bar.urgent { animation: none; } }

@@ -12,7 +12,7 @@ import { queryParam, url } from '../../lib/config';
 import type { Person, Task } from '../../lib/types';
 import { reminderLabel } from '../../lib/priority';
 import { formatDateTime, relative, shortTz, tzDifference } from '../../lib/time';
-import { $refresh, bumpRefresh, toast, toastError } from '../../stores/app';
+import { $refresh, bumpRefresh, markTaskSeen, toast, toastError } from '../../stores/app';
 import { $user, myTz } from '../../stores/session';
 import { waLink } from '../../lib/whatsapp';
 
@@ -66,6 +66,10 @@ function TaskDetailContent() {
   }, [id]);
 
   useEffect(load, [load, refresh]);
+  // Ver la tarea cuenta como "atendida": se apaga la alarma de sus avisos
+  useEffect(() => {
+    if (id) markTaskSeen(id);
+  }, [id]);
 
   async function sendComment(e: FormEvent) {
     e.preventDefault();

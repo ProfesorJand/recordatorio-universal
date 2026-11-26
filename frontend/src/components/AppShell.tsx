@@ -7,6 +7,8 @@ import type { User } from '../lib/types';
 import { TOURS } from '../lib/tours';
 import { $session, $user, can, clearSession, setUser } from '../stores/session';
 import { $notifications, $unread, loadNotifications } from '../stores/app';
+import { $snoozeUntil, alarmTick, isUrgentAlarm, snooze, unsnooze } from '../stores/alarm';
+import { unlockAudio } from '../lib/sound';
 import { Avatar, Spinner, Toasts } from './ui';
 import NotificationBell from './NotificationBell';
 import CheckinButtons from './CheckinButtons';
@@ -32,6 +34,8 @@ export default function AppShell({ page, children }: { page: string; children: R
   const notifications = useStore($notifications);
   useStore($unread);
   const tourReq = useStore($tourRequest);
+  const snoozeUntil = useStore($snoozeUntil);
+  const [snoozeMenu, setSnoozeMenu] = useState(false);
   const [ready, setReady] = useState(false);
   const [menu, setMenu] = useState(false);
   const [tour, setTour] = useState<string | null>(null);
@@ -66,6 +70,18 @@ export default function AppShell({ page, children }: { page: string; children: R
       window.removeEventListener('focus', onFocus);
     };
   }, [ready]);
+
+  // 2b) Sonido: desbloquear audio en el primer clic y revisar la alarma urgente cada 15 s
+  useEffect(() => {
+    const unlock = () => unlockAudio();
+    window.addEventListener('pointerdown', unlock, { once: true });
+    window.addEventListener('keydown', unlock, { once: true });
+    const id = setInterval(() => alarmTick($notifications.get()), 15_000);
+    return () => clearInterval(id);
+  }, []);
+  useEffect(() => {
+    if (ready) alarmTick(notifications);
+  }, [ready, notifications]);
 
   // 3) Tutorial automático la primera vez
   useEffect(() => {
@@ -124,7 +140,9 @@ export default function AppShell({ page, children }: { page: string; children: R
     );
   }
 
-  const alert = notifications.find((n) => n.actionable && n.task);
+  const alert = notifications.find(isUrgentAlarm) || notifications.find((n) => n.actionable && n.task);
+  const alarmOn = !!alert && isUrgentAlarm(alert);
+  const snoozed = snoozeUntil > Date.now();
   const visibleNav = NAV.filter((n) => !n.perm || (Array.isArray(n.perm) ? n.perm.some(can) : can(n.perm)));
 
   return (
@@ -159,7 +177,7 @@ export default function AppShell({ page, children }: { page: string; children: R
       </header>
 
       {alert && alert.task && (
-        <div className="alert-bar" role="alert">
+        <div className={`alert-bar ${alarmOn ? 'urgent' : ''}`} role="alert">
           <div className="inner">
             <span style={{ flex: 1, minWidth: 200 }}>
               <strong>{alert.title}</strong>
@@ -167,6 +185,21 @@ export default function AppShell({ page, children }: { page: string; children: R
             </span>
             <CheckinButtons taskId={alert.task.id} status={alert.task.status} />
             <a className="btn sm ghost" href={url(`/tarea/?id=${alert.task.id}`)}>Ver tarea</a>
+            {alarmOn && (
+              <div className="dropdown">
+                <button className="btn sm" onClick={() => setSnoozeMenu(!snoozeMenu)} title="La alarma suena cada 2 minutos hasta que veas la tarea">
+                  {snoozed ? `🔕 Silenciada hasta ${new Date(snoozeUntil).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}` : '🔔 Silenciar ▾'}
+                </button>
+                {snoozeMenu && (
+                  <div className="menu">
+                    {[5, 15, 30, 60].map((m) => (
+                      <button key={m} onClick={() => { snooze(m); setSnoozeMenu(false); }}>Silenciar {m} minutos</button>
+                    ))}
+                    {snoozed && <button onClick={() => { unsnooze(); setSnoozeMenu(false); }}>🔔 Volver a activar</button>}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

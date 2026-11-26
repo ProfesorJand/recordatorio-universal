@@ -8,6 +8,7 @@ import type { User } from '../../lib/types';
 import { browserTz } from '../../lib/time';
 import { $user, setUser } from '../../stores/session';
 import { toast, toastError } from '../../stores/app';
+import { playNotify, playUrgent, setSoundEnabled, soundEnabled, unlockAudio } from '../../lib/sound';
 
 const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
@@ -22,6 +23,7 @@ function ProfileContent() {
   const [notifyEmail, setNotifyEmail] = useState(user.notify_email);
   const [phone, setPhone] = useState(user.whatsapp_phone || '');
   const [busy, setBusy] = useState(false);
+  const [sound, setSound] = useState(soundEnabled());
   const [browserPerm, setBrowserPerm] = useState(typeof Notification !== 'undefined' ? Notification.permission : 'denied');
 
   async function save(e: FormEvent) {
@@ -123,6 +125,14 @@ function ProfileContent() {
           <input type="tel" placeholder="+54 9 11 2233 4455" value={phone} onChange={(e) => setPhone(e.target.value)} />
           <div className="hint">Con código de país. Se usa para que te avisen por WhatsApp de las tareas urgentes (botón "WhatsApp" en la tarea).</div>
         </div>
+        <div className="row" style={{ marginBottom: 10 }}>
+          <label className="check" style={{ margin: 0 }}>
+            <input type="checkbox" checked={sound} onChange={(e) => { setSound(e.target.checked); setSoundEnabled(e.target.checked); }} /> 🔊 Sonido en los avisos (en este dispositivo)
+          </label>
+          <button type="button" className="btn sm" onClick={() => { unlockAudio(); playNotify(true); }}>Probar aviso</button>
+          <button type="button" className="btn sm" onClick={() => { unlockAudio(); playUrgent(true); }}>Probar alarma urgente</button>
+        </div>
+        <p className="hint" style={{ marginTop: 0 }}>Lo urgente suena cada 2 minutos hasta que abras la tarea, respondas o lo silencies. La app tiene que estar abierta en una pestaña.</p>
         <div className="row">
           <span className="small">Avisos del navegador: {browserPerm === 'granted' ? '✅ activados' : browserPerm === 'denied' ? '🚫 bloqueados' : 'sin activar'}</span>
           {browserPerm === 'default' && <button type="button" className="btn sm" onClick={askBrowser}>Activar</button>}
