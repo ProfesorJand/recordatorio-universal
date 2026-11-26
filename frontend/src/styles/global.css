@@ -198,3 +198,5 @@ th { color: var(--text-2); font-weight: 600; font-size: 0.8rem; }
 .timer-badge { display: inline-flex; align-items: center; background: #e8f1fc; border-radius: 999px; padding: 0 2px; white-space: nowrap; }
 .timer-title { display: inline-block; max-width: 160px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
 @media (max-width: 760px) { .timer-title { display: none; } }
+.task.running { box-shadow: 0 0 0 2px var(--primary), var(--shadow); background: #f5f9ff; }
+.chip.live { background: #e8f1fc; border-color: #b6d5f8; color: var(--primary-dark); font-variant-numeric: tabular-nums; }

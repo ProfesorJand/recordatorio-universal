@@ -59,6 +59,7 @@ export async function api<T = any>(path: string, opts: Options = {}): Promise<T>
 export async function uploadImage(file: File): Promise<string> {
   const form = new FormData();
   form.append('file', file);
-  const r = await api<{ url: string }>('/uploads', { method: 'POST', form });
+  // En singular: /uploads es la carpeta real de las imágenes y Apache redirige (rompe CORS)
+  const r = await api<{ url: string }>('/upload', { method: 'POST', form });
   return r.url;
 }

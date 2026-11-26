@@ -9,6 +9,8 @@ import type { Project, Task } from '../../lib/types';
 import { sortTasks } from '../../lib/priority';
 import { $refresh, toastError } from '../../stores/app';
 import { can } from '../../stores/session';
+import { $timer } from '../../stores/timer';
+import { url } from '../../lib/config';
 
 type Scope = 'mine' | 'supervising' | 'all';
 
@@ -32,16 +34,21 @@ function TasksContent() {
     api<{ tasks: Task[] }>(`/tasks?${qs}`).then((r) => setTasks(r.tasks)).catch(toastError);
   }, [scope, projectId, refresh]);
 
+  const timer = useStore($timer);
+  const currentId = timer.running ? timer.task?.id : undefined;
+  const current = (tasks || []).find((t) => t.id === currentId);
+
   const groups = useMemo(() => {
     const q = search.trim().toLowerCase();
     const list = (tasks || []).filter((t) => !q || t.title.toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q));
     return {
-      active: sortTasks(list.filter((t) => t.status === 'pendiente' || t.status === 'en_progreso')),
+      // la tarea con el cronómetro corriendo va aparte, arriba de todo
+      active: sortTasks(list.filter((t) => (t.status === 'pendiente' || t.status === 'en_progreso') && t.id !== currentId)),
       blocked: sortTasks(list.filter((t) => t.status === 'bloqueada')),
       deferred: sortTasks(list.filter((t) => t.status === 'aplazada')),
       done: list.filter((t) => t.status === 'completada').sort((a, b) => (b.completed_at || '').localeCompare(a.completed_at || '')),
     };
-  }, [tasks, search]);
+  }, [tasks, search, currentId]);
 
   return (
     <>
@@ -66,6 +73,20 @@ function TasksContent() {
 
       {tasks === null ? <Loading /> : (
         <div data-tour="list">
+          {timer.running && timer.task && (
+            <div data-tour="current">
+              <h2>▶ Haciendo ahora</h2>
+              {current
+                ? <TaskCard task={current} />
+                : (
+                  <div className="card task running">
+                    <a className="task-title" href={url(`/tarea/?id=${timer.task.id}`)}>{timer.task.title}</a>
+                    <span className="tiny muted" style={{ marginLeft: 8 }}>(no está en este filtro)</span>
+                  </div>
+                )}
+            </div>
+          )}
+
           <h2>Para hacer ({groups.active.length})</h2>
           {groups.active.length === 0
             ? <Empty>{scope === 'mine' ? '¡No tienes tareas pendientes! 🎉' : 'No hay tareas pendientes.'}</Empty>

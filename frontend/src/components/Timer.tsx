@@ -7,7 +7,7 @@ import { playNotify } from '../lib/sound';
 import { Modal } from './ui';
 
 /** Fuerza un re-render cada segundo (para que el reloj avance) */
-function useTick(active: boolean) {
+export function useTick(active: boolean) {
   const [, set] = useState(0);
   useEffect(() => {
     if (!active) return;

@@ -4,13 +4,18 @@ import { $user } from '../stores/session';
 import type { Task } from '../lib/types';
 import { Avatar, DueDate, PriorityChip, StatusChip } from './ui';
 import CheckinButtons from './CheckinButtons';
-import { fmtDuration, relative } from '../lib/time';
+import { fmtClock, fmtDuration, relative } from '../lib/time';
+import { $timer, liveSeconds, stopTimer } from '../stores/timer';
+import { useTick } from './Timer';
 
 export default function TaskCard({ task, showProject = true }: { task: Task; showProject?: boolean }) {
   const me = useStore($user);
   const mine = task.assignee?.id === me?.id;
+  const timer = useStore($timer);
+  const running = timer.running && timer.task?.id === task.id;
+  useTick(running);
   return (
-    <div className={`card task p-${task.effective_priority || task.priority} ${task.status === 'completada' ? 'done' : ''}`}>
+    <div className={`card task p-${task.effective_priority || task.priority} ${task.status === 'completada' ? 'done' : ''} ${running ? 'running' : ''}`}>
       <Avatar person={task.assignee} size={32} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <a className="task-title" href={url(`/tarea/?id=${task.id}`)}>
@@ -27,7 +32,12 @@ export default function TaskCard({ task, showProject = true }: { task: Task; sho
           )}
           {task.parent_task_id && <span className="chip" title="La pidieron desde otra tarea">🔗 vinculada</span>}
           {task.children_open > 0 && <span className="chip">⛓ espera {task.children_open}</span>}
-          {task.worked_seconds > 0 && <span className="chip" title="Tiempo trabajado">⏱ {fmtDuration(task.worked_seconds)}</span>}
+          {running ? (
+            <span className="chip live" title="Cronómetro corriendo en esta tarea">
+              ⏱ {fmtClock(liveSeconds(timer))}
+              <button type="button" className="btn sm ghost" style={{ padding: '0 4px', fontSize: '0.75rem' }} onClick={stopTimer} aria-label="Pausar">⏸</button>
+            </span>
+          ) : task.worked_seconds > 0 && <span className="chip" title="Tiempo trabajado">⏱ {fmtDuration(task.worked_seconds)}</span>}
           {task.due_changes > 0 && (
             <span className="chip soon" title="Veces que se cambió la fecha límite">📅 fecha cambiada {task.due_changes}×</span>
           )}
