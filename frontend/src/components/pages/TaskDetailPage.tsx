@@ -5,6 +5,7 @@ import TaskForm from '../TaskForm';
 import TaskCard from '../TaskCard';
 import DepTree, { countChain, type DepNode } from '../DepTree';
 import TimeCard from '../TimeCard';
+import CommentItem, { type Comment } from '../CommentItem';
 import ReviewButtons from '../ReviewButtons';
 import RichText from '../RichText';
 import ImageUpload, { useImagePaste } from '../ImageUpload';
@@ -26,7 +27,7 @@ interface Detail {
   children: Task[];
   chain: DepNode[];
   blocking: Task[];
-  comments: { id: number; body: string; created_at: string; user: { id: number; name: string; picture: string | null } }[];
+  comments: Comment[];
   activity: { action: string; detail: string | null; created_at: string; user: string }[];
   can: { edit: boolean; checkin: boolean; link: boolean; comment: boolean; delete: boolean; review: boolean };
 }
@@ -229,15 +230,7 @@ function TaskDetailContent() {
           <div className="card" data-tour="comments">
             <h3 style={{ marginTop: 0 }}>💬 Comentarios</h3>
             {d.comments.length === 0 && <p className="small muted">Todavía no hay comentarios.</p>}
-            {d.comments.map((c) => (
-              <div key={c.id} className="row" style={{ alignItems: 'flex-start', marginBottom: 12 }}>
-                <Avatar person={{ name: c.user.name, email: '', picture: c.user.picture }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="small"><strong>{c.user.name}</strong> <span className="tiny muted">{relative(c.created_at)}</span></div>
-                  <RichText text={c.body} />
-                </div>
-              </div>
-            ))}
+            {d.comments.map((c) => <CommentItem key={c.id} c={c} onSaved={load} />)}
             {d.can.comment && (
               <form onSubmit={sendComment}>
                 <textarea ref={commentRef} value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Escribe un comentario (se avisa al supervisor)… Puedes pegar imágenes con Ctrl+V" style={{ minHeight: 70 }} {...commentPaste.handlers} />
