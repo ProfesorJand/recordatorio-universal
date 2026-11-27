@@ -13,6 +13,7 @@ import { $timer } from '../../stores/timer';
 import { url } from '../../lib/config';
 
 type Scope = 'mine' | 'supervising' | 'all';
+type View = 'todo' | 'review' | 'done';
 
 function TasksContent() {
   const refresh = useStore($refresh);
@@ -23,6 +24,9 @@ function TasksContent() {
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(false);
   const [toReview, setToReview] = useState<Task[]>([]);
+  const [view, setView] = useState<View>(() => (localStorage.getItem('ru_view') as View) || 'todo');
+  const [doneAll, setDoneAll] = useState<Task[] | null>(null);
+  const [doneLimit, setDoneLimit] = useState(30);
 
   useEffect(() => {
     api<{ projects: Project[] }>('/projects').then((r) => setProjects(r.projects)).catch(toastError);
@@ -34,6 +38,18 @@ function TasksContent() {
     if (projectId) qs.set('project_id', projectId);
     api<{ tasks: Task[] }>(`/tasks?${qs}`).then((r) => setTasks(r.tasks)).catch(toastError);
   }, [scope, projectId, refresh]);
+
+  // Pestaña Completadas: todas las completadas (no solo las de los últimos 7 días)
+  useEffect(() => {
+    localStorage.setItem('ru_view', view);
+    if (view !== 'done') return;
+    setDoneAll(null);
+    const qs = new URLSearchParams({ scope, include_completed: '1' });
+    if (projectId) qs.set('project_id', projectId);
+    api<{ tasks: Task[] }>(`/tasks?${qs}`)
+      .then((r) => setDoneAll(r.tasks.filter((t) => t.status === 'completada').sort((a, b) => (b.completed_at || '').localeCompare(a.completed_at || ''))))
+      .catch(toastError);
+  }, [view, scope, projectId, refresh]);
 
   // Entregas que yo tengo que revisar (sin importar la pestaña elegida)
   useEffect(() => {
@@ -57,6 +73,13 @@ function TasksContent() {
     };
   }, [tasks, search, currentId]);
 
+  const q = search.trim().toLowerCase();
+  const match = (t: Task) => !q || t.title.toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q);
+  const myDelivered = groups.review.filter((t) => !toReview.some((r) => r.id === t.id)); // entregadas, esperando revisión de otro
+  const reviewCount = toReview.length + myDelivered.length;
+  const doneList = (doneAll || []).filter(match);
+  const todoCount = groups.active.length + groups.blocked.length + groups.deferred.length + (timer.running ? 1 : 0);
+
   return (
     <>
       <div className="row between" style={{ marginBottom: '1rem' }}>
@@ -78,8 +101,46 @@ function TasksContent() {
         <input type="text" placeholder="Buscar…" value={search} onChange={(e) => setSearch(e.target.value)} style={{ maxWidth: 260 }} />
       </div>
 
-      {tasks === null ? <Loading /> : (
+      <div className="seg" role="tablist" data-tour="views">
+        <button role="tab" className={view === 'todo' ? 'active' : ''} onClick={() => setView('todo')}>📋 Para hacer <span className="count">{todoCount}</span></button>
+        <button role="tab" className={view === 'review' ? 'active' : ''} onClick={() => setView('review')}>
+          🔍 En revisión <span className={`count ${toReview.length ? 'alert' : ''}`}>{reviewCount}</span>
+        </button>
+        <button role="tab" className={view === 'done' ? 'active' : ''} onClick={() => setView('done')}>✓ Completadas</button>
+      </div>
+
+      {tasks === null ? <Loading /> : view === 'review' ? (
+        <div>
+          <h2>🔍 Para revisar ({toReview.length})</h2>
+          <p className="tiny muted" style={{ marginTop: -6 }}>Entregas de tareas que tú supervisas. Apruébalas o devuélvelas con un comentario.</p>
+          {toReview.length === 0 ? <Empty>No tienes entregas pendientes de revisar.</Empty> : <div className="grid">{toReview.filter(match).map((t) => <TaskCard key={t.id} task={t} />)}</div>}
+
+          <h2>📤 Entregadas, esperando revisión ({myDelivered.length})</h2>
+          <p className="tiny muted" style={{ marginTop: -6 }}>Tareas ya entregadas que el supervisor todavía no aprobó.</p>
+          {myDelivered.length === 0 ? <Empty>No hay entregas esperando a otro supervisor.</Empty> : <div className="grid">{myDelivered.map((t) => <TaskCard key={t.id} task={t} />)}</div>}
+        </div>
+      ) : view === 'done' ? (
+        <div>
+          {doneAll === null ? <Loading /> : doneList.length === 0 ? <Empty>No hay tareas completadas.</Empty> : (
+            <>
+              <h2>✓ Completadas ({doneList.length})</h2>
+              <div className="grid">{doneList.slice(0, doneLimit).map((t) => <TaskCard key={t.id} task={t} />)}</div>
+              {doneList.length > doneLimit && (
+                <div style={{ textAlign: 'center', marginTop: '0.75rem' }}>
+                  <button className="btn" onClick={() => setDoneLimit(doneLimit + 30)}>Ver más ({doneList.length - doneLimit} restantes)</button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      ) : (
         <div data-tour="list">
+          {toReview.length > 0 && (
+            <div className="card row between" style={{ background: '#fff8e6', borderColor: '#f3dfae', marginBottom: '0.5rem' }} data-tour="to-review">
+              <span className="small">🔍 Tienes <strong>{toReview.length}</strong> {toReview.length === 1 ? 'entrega' : 'entregas'} esperando tu revisión.</span>
+              <button className="btn sm primary" onClick={() => setView('review')}>Revisar ahora</button>
+            </div>
+          )}
           {timer.running && timer.task && (
             <div data-tour="current">
               <h2>▶ Haciendo ahora</h2>
@@ -94,13 +155,6 @@ function TasksContent() {
             </div>
           )}
 
-          {toReview.length > 0 && (
-            <div data-tour="to-review">
-              <h2>🔍 Para revisar ({toReview.length})</h2>
-              <div className="grid">{toReview.map((t) => <TaskCard key={t.id} task={t} />)}</div>
-            </div>
-          )}
-
           <h2>Para hacer ({groups.active.length})</h2>
           {groups.active.length === 0
             ? <Empty>{scope === 'mine' ? '¡No tienes tareas pendientes! 🎉' : 'No hay tareas pendientes.'}</Empty>
@@ -112,22 +166,10 @@ function TasksContent() {
               <div className="grid">{groups.blocked.map((t) => <TaskCard key={t.id} task={t} />)}</div>
             </>
           )}
-          {groups.review.filter((t) => !toReview.some((r) => r.id === t.id)).length > 0 && (
-            <>
-              <h2>🔍 Entregadas, esperando revisión</h2>
-              <div className="grid">{groups.review.filter((t) => !toReview.some((r) => r.id === t.id)).map((t) => <TaskCard key={t.id} task={t} />)}</div>
-            </>
-          )}
           {groups.deferred.length > 0 && (
             <>
               <h2>⏸ Aplazadas ({groups.deferred.length})</h2>
               <div className="grid">{groups.deferred.map((t) => <TaskCard key={t.id} task={t} />)}</div>
-            </>
-          )}
-          {groups.done.length > 0 && (
-            <>
-              <h2>✓ Completadas (últimos 7 días)</h2>
-              <div className="grid">{groups.done.map((t) => <TaskCard key={t.id} task={t} />)}</div>
             </>
           )}
         </div>

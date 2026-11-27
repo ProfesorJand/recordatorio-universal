@@ -202,3 +202,10 @@ th { color: var(--text-2); font-weight: 600; font-size: 0.8rem; }
 .chip.live { background: #e8f1fc; border-color: #b6d5f8; color: var(--primary-dark); font-variant-numeric: tabular-nums; }
 .review-box { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: #f3f4f6; border: 1px solid var(--border); }
 .presence { position: absolute; right: -1px; bottom: -1px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; }
+
+/* ---------- pestañas tipo "segmento" (Para hacer / En revisión / Completadas) */
+.seg { display: inline-flex; gap: 4px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 4px; margin-bottom: 0.5rem; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; padding: 0.45rem 0.8rem; border-radius: 9px; font: inherit; font-size: 0.9rem; cursor: pointer; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; }
+.seg button.active { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: var(--shadow); }
+.seg .count { background: #e3e5ea; color: var(--text-2); border-radius: 999px; padding: 0 7px; font-size: 0.75rem; font-weight: 600; }
+.seg .count.alert { background: var(--danger); color: #fff; }
