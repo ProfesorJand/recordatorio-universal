@@ -13,7 +13,7 @@ import { $timer } from '../../stores/timer';
 import { url } from '../../lib/config';
 
 type Scope = 'mine' | 'supervising' | 'all';
-type View = 'todo' | 'review' | 'done';
+type View = 'todo' | 'returned' | 'review' | 'done';
 
 function TasksContent() {
   const refresh = useStore($refresh);
@@ -77,6 +77,8 @@ function TasksContent() {
   const match = (t: Task) => !q || t.title.toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q);
   const myDelivered = groups.review.filter((t) => !toReview.some((r) => r.id === t.id)); // entregadas, esperando revisión de otro
   const reviewCount = toReview.length + myDelivered.length;
+  // Devueltas por el supervisor y todavía sin volver a entregar
+  const returned = sortTasks((tasks || []).filter((t) => t.returned_count > 0 && !['en_revision', 'completada'].includes(t.status)).filter(match));
   const doneList = (doneAll || []).filter(match);
   const todoCount = groups.active.length + groups.blocked.length + groups.deferred.length + (timer.running ? 1 : 0);
 
@@ -103,13 +105,24 @@ function TasksContent() {
 
       <div className="seg" role="tablist" data-tour="views">
         <button role="tab" className={view === 'todo' ? 'active' : ''} onClick={() => setView('todo')}>📋 Para hacer <span className="count">{todoCount}</span></button>
+        <button role="tab" className={view === 'returned' ? 'active' : ''} onClick={() => setView('returned')}>
+          ↩ Devueltas <span className={`count ${returned.length ? 'warn' : ''}`}>{returned.length}</span>
+        </button>
         <button role="tab" className={view === 'review' ? 'active' : ''} onClick={() => setView('review')}>
           🔍 En revisión <span className={`count ${toReview.length ? 'alert' : ''}`}>{reviewCount}</span>
         </button>
         <button role="tab" className={view === 'done' ? 'active' : ''} onClick={() => setView('done')}>✓ Completadas</button>
       </div>
 
-      {tasks === null ? <Loading /> : view === 'review' ? (
+      {tasks === null ? <Loading /> : view === 'returned' ? (
+        <div>
+          <h2>↩ Devueltas ({returned.length})</h2>
+          <p className="tiny muted" style={{ marginTop: -6 }}>
+            El supervisor pidió cambios y todavía no se volvieron a entregar. Abre cada una para ver su comentario (aparece como "↩ Devuelta").
+          </p>
+          {returned.length === 0 ? <Empty>No hay tareas devueltas. 🎉</Empty> : <div className="grid">{returned.map((t) => <TaskCard key={t.id} task={t} />)}</div>}
+        </div>
+      ) : view === 'review' ? (
         <div>
           <h2>🔍 Para revisar ({toReview.length})</h2>
           <p className="tiny muted" style={{ marginTop: -6 }}>Entregas de tareas que tú supervisas. Apruébalas o devuélvelas con un comentario.</p>
@@ -135,6 +148,12 @@ function TasksContent() {
         </div>
       ) : (
         <div data-tour="list">
+          {returned.length > 0 && (
+            <div className="card row between" style={{ background: '#fdecec', borderColor: '#f5c2c2', marginBottom: '0.5rem' }}>
+              <span className="small">↩ Hay <strong>{returned.length}</strong> {returned.length === 1 ? 'tarea devuelta' : 'tareas devueltas'} con cambios pedidos por el supervisor.</span>
+              <button className="btn sm" onClick={() => setView('returned')}>Ver devueltas</button>
+            </div>
+          )}
           {toReview.length > 0 && (
             <div className="card row between" style={{ background: '#fff8e6', borderColor: '#f3dfae', marginBottom: '0.5rem' }} data-tour="to-review">
               <span className="small">🔍 Tienes <strong>{toReview.length}</strong> {toReview.length === 1 ? 'entrega' : 'entregas'} esperando tu revisión.</span>

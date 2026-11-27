@@ -209,3 +209,4 @@ th { color: var(--text-2); font-weight: 600; font-size: 0.8rem; }
 .seg button.active { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: var(--shadow); }
 .seg .count { background: #e3e5ea; color: var(--text-2); border-radius: 999px; padding: 0 7px; font-size: 0.75rem; font-weight: 600; }
 .seg .count.alert { background: var(--danger); color: #fff; }
+.seg .count.warn { background: #f47230; color: #fff; }
