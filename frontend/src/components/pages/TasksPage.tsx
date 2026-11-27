@@ -13,7 +13,7 @@ import { $timer } from '../../stores/timer';
 import { url } from '../../lib/config';
 
 type Scope = 'mine' | 'supervising' | 'all';
-type View = 'todo' | 'returned' | 'review' | 'done';
+type View = 'todo' | 'blocked' | 'returned' | 'review' | 'done';
 
 function TasksContent() {
   const refresh = useStore($refresh);
@@ -80,7 +80,12 @@ function TasksContent() {
   // Devueltas por el supervisor y todavía sin volver a entregar
   const returned = sortTasks((tasks || []).filter((t) => t.returned_count > 0 && !['en_revision', 'completada'].includes(t.status)).filter(match));
   const doneList = (doneAll || []).filter(match);
-  const todoCount = groups.active.length + groups.blocked.length + groups.deferred.length + (timer.running ? 1 : 0);
+  const todoCount = groups.active.length + groups.deferred.length + (timer.running ? 1 : 0);
+  // Vinculadas: tareas abiertas que forman parte de una cadena (esperan a otras o otras las esperan), sin las bloqueadas
+  const awaitedIds = new Set((tasks || []).flatMap((t) => (t.status === 'completada' ? [] : t.depends_on_ids)));
+  const linked = sortTasks((tasks || []).filter((t) =>
+    t.status !== 'completada' && t.status !== 'bloqueada' && (t.depends_on_ids.length > 0 || awaitedIds.has(t.id))).filter(match));
+  const blocked = groups.blocked;
 
   return (
     <>
@@ -105,6 +110,9 @@ function TasksContent() {
 
       <div className="seg" role="tablist" data-tour="views">
         <button role="tab" className={view === 'todo' ? 'active' : ''} onClick={() => setView('todo')}>📋 Para hacer <span className="count">{todoCount}</span></button>
+        <button role="tab" className={view === 'blocked' ? 'active' : ''} onClick={() => setView('blocked')}>
+          🔒 Bloqueadas y vinculadas <span className="count">{blocked.length}</span>
+        </button>
         <button role="tab" className={view === 'returned' ? 'active' : ''} onClick={() => setView('returned')}>
           ↩ Devueltas <span className={`count ${returned.length ? 'warn' : ''}`}>{returned.length}</span>
         </button>
@@ -114,7 +122,26 @@ function TasksContent() {
         <button role="tab" className={view === 'done' ? 'active' : ''} onClick={() => setView('done')}>✓ Completadas</button>
       </div>
 
-      {tasks === null ? <Loading /> : view === 'returned' ? (
+      {tasks === null ? <Loading /> : view === 'blocked' ? (
+        <div>
+          <h2>🔒 Bloqueadas ({blocked.length})</h2>
+          <p className="tiny muted" style={{ marginTop: -6 }}>No se pueden empezar hasta que se terminen las tareas de las que dependen. Abre cada una para ver la cadena completa.</p>
+          {blocked.length === 0 ? <Empty>No hay tareas bloqueadas.</Empty> : <div className="grid">{blocked.map((t) => <TaskCard key={t.id} task={t} />)}</div>}
+
+          <h2>🔗 Vinculadas ({linked.length})</h2>
+          <p className="tiny muted" style={{ marginTop: -6 }}>Se pueden hacer ya, pero forman parte de una cadena: otras tareas las esperan o dependían de otras ya terminadas.</p>
+          {linked.length === 0 ? <Empty>No hay otras tareas vinculadas.</Empty> : (
+            <div className="grid">
+              {linked.map((t) => (
+                <div key={t.id}>
+                  {awaitedIds.has(t.id) && <div className="tiny" style={{ margin: '0 0 2px 4px', color: '#8a5a00' }}>⏳ Otras tareas esperan a esta</div>}
+                  <TaskCard task={t} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : view === 'returned' ? (
         <div>
           <h2>↩ Devueltas ({returned.length})</h2>
           <p className="tiny muted" style={{ marginTop: -6 }}>
@@ -179,11 +206,11 @@ function TasksContent() {
             ? <Empty>{scope === 'mine' ? '¡No tienes tareas pendientes! 🎉' : 'No hay tareas pendientes.'}</Empty>
             : <div className="grid">{groups.active.map((t) => <TaskCard key={t.id} task={t} />)}</div>}
 
-          {groups.blocked.length > 0 && (
-            <>
-              <h2>⛓ Esperando otra tarea ({groups.blocked.length})</h2>
-              <div className="grid">{groups.blocked.map((t) => <TaskCard key={t.id} task={t} />)}</div>
-            </>
+          {blocked.length > 0 && (
+            <p className="small muted" style={{ marginTop: '1rem' }}>
+              🔒 Además hay {blocked.length} {blocked.length === 1 ? 'tarea bloqueada' : 'tareas bloqueadas'} esperando a otras.{' '}
+              <button className="btn sm ghost" style={{ display: 'inline' }} onClick={() => setView('blocked')}>Ver bloqueadas</button>
+            </p>
           )}
           {groups.deferred.length > 0 && (
             <>
